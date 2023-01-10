@@ -1,6 +1,5 @@
 package vem;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.HibernateVersioningSessionFactory;
 import lsa.prototype.vem.engine.impl.meta.HibernateMeta;
@@ -8,19 +7,19 @@ import lsa.prototype.vem.engine.spi.VersioningEntityManager;
 import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
 import lsa.prototype.vem.engine.spi.meta.HistoryMapping;
 import lsa.prototype.vem.engine.spi.meta.Meta;
+import lsa.prototype.vem.model.version.Leaf;
+import lsa.prototype.vem.model.version.VersionedEntity;
+import org.hibernate.Session;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import vem.context.StoreChangeRequest;
 import vem.context.StoreChangeUnit;
 import vem.entity.Item;
 import vem.entity.Parcel;
 import vem.entity.Store;
-import lsa.prototype.vem.model.version.Leaf;
-import lsa.prototype.vem.model.version.VersionedEntity;
 import vem.util.TestDatabase;
-import org.hibernate.Session;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -104,14 +103,12 @@ public class MainTest {
     }
 
     @Test
-    void shoot() {
+    void testVersionedPersist() {
         VersioningEntityManagerFactory factory = new HibernateVersioningSessionFactory(
                 database.getEntityManagerFactory().unwrap(SessionFactoryImpl.class)
         );
 
         try (VersioningEntityManager vem = factory.createEntityManager()) {
-
-            vem.em().getTransaction().begin();
 
             Store store = new Store();
             store.setName("Macy's");
@@ -124,19 +121,33 @@ public class MainTest {
             item.setName("Converse");
             parcel.getItems().add(item);
 
-            vem.em().persist(store);
+            vem.em().getTransaction().begin();
+
+            vem.persist(store);
 
             vem.em().getTransaction().commit();
             vem.em().clear();
 
             System.out.println();
         }
+
+        try (EntityManager em = database.newEntityManager()) {
+            StoreChangeRequest request = em.createQuery(
+                    "select c from StoreChangeRequest c where c.root.name = 'Macy''s'",
+                    StoreChangeRequest.class
+            ).getSingleResult();
+
+            Assertions.assertEquals(2, request.getUnits().size());
+        }
     }
 
     @Test
-    void shoot2() {
-        Meta meta = new HibernateMeta(database.newEntityManager().unwrap(SessionImpl.class).getMetamodel());
-        HistoryMapping historyMapping = new HistoryMapping(meta);
-        System.out.println();
+    void testMetadataCreation() {
+        try (EntityManager em = database.newEntityManager()) {
+            Meta meta = new HibernateMeta(
+                    em.unwrap(SessionImpl.class).getMetamodel()
+            );
+            HistoryMapping historyMapping = new HistoryMapping(meta);
+        }
     }
 }

@@ -7,7 +7,6 @@ import lsa.prototype.vem.model.basic.PersistedObject;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HibernateMeta implements Meta {

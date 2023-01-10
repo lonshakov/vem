@@ -8,10 +8,13 @@ import lsa.prototype.vem.model.version.Root;
 @MappedSuperclass
 abstract public class ChangeUnit<T extends Root> extends PersistedObject {
     abstract public Leaf<?> getLeaf();
+
     abstract public void setLeaf(Leaf<?> leaf);
 
     abstract public ChangeRequest<T> getRequest();
+
     abstract public void setRequest(ChangeRequest<T> request);
+
     private long date;
 
 }

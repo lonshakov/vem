@@ -21,5 +21,5 @@ public interface Parameter<T extends PersistedObject> {
 
     void set(T owner, Object value);
 
-     Object get(T owner);
+    Object get(T owner);
 }

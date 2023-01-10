@@ -7,8 +7,6 @@ import lsa.prototype.vem.engine.spi.meta.HistoryMapping;
 import lsa.prototype.vem.engine.spi.meta.Meta;
 import org.hibernate.internal.SessionFactoryImpl;
 
-import java.util.Collections;
-
 public class HibernateVersioningSessionFactory implements VersioningEntityManagerFactory {
     private final SessionFactoryImpl factory;
     private final Meta meta;

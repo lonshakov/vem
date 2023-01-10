@@ -4,7 +4,6 @@ import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.spi.VersioningEntityManager;
 import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
 import lsa.prototype.vem.engine.spi.meta.Datatype;
-import lsa.prototype.vem.engine.spi.meta.HistoryMapping;
 import lsa.prototype.vem.engine.spi.meta.Parameter;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
@@ -67,7 +66,13 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         }
 
         for (Parameter<V> parameter : datatype.references().values()) {
+            if (parameter.getName().equals("parent")) {
+                continue;
+            }
             Leaf<VersionedEntity> leaf = (Leaf<VersionedEntity>) parameter.get(entity);
+            if (leaf == null) {
+                continue;
+            }
             bind(request, leaf);
         }
     }

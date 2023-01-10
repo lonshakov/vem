@@ -2,8 +2,6 @@ package lsa.prototype.vem.engine.spi.meta;
 
 import lsa.prototype.vem.model.basic.PersistedObject;
 
-import java.util.Map;
-
 public interface Meta extends Iterable<Datatype<?>> {
     <T extends PersistedObject> Datatype<T> datatype(Class<T> type);
 

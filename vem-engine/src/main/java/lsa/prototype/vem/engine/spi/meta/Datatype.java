@@ -1,7 +1,6 @@
 package lsa.prototype.vem.engine.spi.meta;
 
 import lsa.prototype.vem.model.basic.PersistedObject;
-import lsa.prototype.vem.model.version.Root;
 
 import java.util.Map;
 

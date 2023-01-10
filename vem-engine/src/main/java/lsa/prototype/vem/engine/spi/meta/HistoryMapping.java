@@ -37,7 +37,7 @@ public class HistoryMapping {
         return mappings.get(type);
     }
 
-    public <T extends VersionedEntity> Entry<?> get(T object){
+    public <T extends VersionedEntity> Entry<?> get(T object) {
         return get(object.getClass());
     }
 

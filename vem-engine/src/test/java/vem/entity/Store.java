@@ -1,6 +1,5 @@
 package vem.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lsa.prototype.vem.model.version.Root;

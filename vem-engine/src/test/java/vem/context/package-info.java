@@ -10,8 +10,8 @@
 )
 package vem.context;
 
+import org.hibernate.annotations.AnyMetaDef;
+import org.hibernate.annotations.MetaValue;
 import vem.entity.Item;
 import vem.entity.Parcel;
 import vem.entity.Store;
-import org.hibernate.annotations.AnyMetaDef;
-import org.hibernate.annotations.MetaValue;

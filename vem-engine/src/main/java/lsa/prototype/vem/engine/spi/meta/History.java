@@ -1,7 +1,5 @@
 package lsa.prototype.vem.engine.spi.meta;
 
-import lsa.prototype.vem.model.context.ChangeRequest;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -12,5 +10,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface History {
     Class<?> request();
+
     Class<?> unit();
 }
