@@ -22,21 +22,29 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Root, R extends ChangeRequest<T>> R persist(T root) {
-        R request = (R) factory().getHistoryMapping().get(root).request().instantiate();
+    public <T extends Root, R extends ChangeRequest<T>> R persist(T entity) {
+        R request = (R) factory().getHistoryMapping().get(entity).request().instantiate();
 
         em.persist(request);
-        em.persist(root);
-        request.setRoot(root);
+        em.persist(entity);
+        request.setRoot(entity);
 
-        walk(root, request);
+        walk(entity, request);
 
         return request;
     }
 
     @Override
     public <T extends Root, R extends ChangeRequest<T>> R merge(T entity) {
-        return null;
+        R request = (R) factory().getHistoryMapping().get(entity).request().instantiate();
+        T storedEntity = em.find((Class<T>) entity.getClass(), entity.getId());
+
+        em.persist(request);
+        request.setRoot(storedEntity);
+
+        //todo
+
+        return request;
     }
 
     @Override
