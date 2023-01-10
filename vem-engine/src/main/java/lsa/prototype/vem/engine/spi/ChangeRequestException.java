@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine;
+package lsa.prototype.vem.engine.spi;
 
 public class ChangeRequestException extends RuntimeException {
     public ChangeRequestException() {

@@ -1,4 +1,4 @@
-package lsa.prototype.vem.entity;
+package vem.entity;
 
 import jakarta.persistence.Entity;
 import lsa.prototype.vem.model.version.Leaf;

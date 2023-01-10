@@ -8,7 +8,7 @@ import lsa.prototype.vem.model.basic.Particle;
 @MappedSuperclass
 public class VersionedEntity extends Particle {
     @Enumerated(EnumType.STRING)
-    private State versionState;
+    private State versionState = State.DRAFT;
     private long versionDate;
 
     public State getVersionState() {

@@ -10,7 +10,7 @@ import lsa.prototype.vem.model.version.Root;
 abstract public class ChangeRequest<T extends Root> extends Particle {
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;
-    private State state;
+    private State state = State.DRAFT;
 
     public T getRoot() {
         return root;

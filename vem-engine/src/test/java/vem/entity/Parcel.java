@@ -1,12 +1,12 @@
-package lsa.prototype.vem.entity;
+package vem.entity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import lsa.prototype.vem.context.StoreChangeUnit;
+import vem.context.StoreChangeUnit;
 import lsa.prototype.vem.model.version.Leaf;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.Filter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +14,8 @@ import java.util.List;
 @Entity
 public class Parcel extends Leaf<Store> {
     private String name;
-    @OneToMany(mappedBy = "parent", orphanRemoval = true, cascade = CascadeType.ALL)
-    @Where(clause = "versionState = 'ACTIVE'")
+    @OneToMany(mappedBy = "parent", orphanRemoval = true)
+    @Filter(name = "CurrentVersion")
     private List<Item> items = new ArrayList<>();
     @OneToOne
     private StoreChangeUnit changeUnit;

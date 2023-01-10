@@ -1,9 +1,10 @@
-package lsa.prototype.vem.entity;
+package vem.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lsa.prototype.vem.model.version.Root;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.Filter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
 public class Store extends Root {
     private String name;
     @OneToMany(mappedBy = "parent", orphanRemoval = true)
-    @Where(clause = "versionState = 'ACTIVE'")
+    @Filter(name = "CurrentVersion")
     private List<Parcel> parcels = new ArrayList<>();
 
     public String getName() {

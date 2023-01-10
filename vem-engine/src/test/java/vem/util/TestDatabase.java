@@ -1,4 +1,4 @@
-package lsa.prototype.vem.util;
+package vem.util;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -9,5 +9,9 @@ public class TestDatabase {
 
     public EntityManager newEntityManager() {
         return emf.createEntityManager();
+    }
+
+    public EntityManagerFactory getEntityManagerFactory() {
+        return emf;
     }
 }

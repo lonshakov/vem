@@ -12,7 +12,6 @@
     <modules>
         <module>vem-model</module>
         <module>vem-engine</module>
-        <module>vem-example</module>
     </modules>
 
     <properties>

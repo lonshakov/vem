@@ -1,8 +1,8 @@
-package lsa.prototype.vem.context;
+package vem.context;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
-import lsa.prototype.vem.entity.Store;
+import vem.entity.Store;
 import lsa.prototype.vem.model.context.ChangeRequest;
 
 import java.util.HashSet;
