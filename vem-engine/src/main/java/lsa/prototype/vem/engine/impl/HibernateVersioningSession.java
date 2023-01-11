@@ -5,8 +5,9 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import lsa.prototype.vem.engine.spi.*;
 import lsa.prototype.vem.model.context.ChangeRequest;
-import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.model.context.ChangeRequestState;
 import lsa.prototype.vem.model.version.EntityVersion;
+import lsa.prototype.vem.model.version.Root;
 import lsa.prototype.vem.model.version.VersionedEntity;
 
 import java.util.HashMap;
@@ -63,7 +64,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root, R extends ChangeRequest<T>> void affirm(R request) {
-        if (!ChangeRequest.State.DRAFT.equals(request.getState()))
+        if (!ChangeRequestState.Type.DRAFT.equals(request.getState().getStateType()))
             throw new VersioningException("Ошибка при попытке подтвердить заявку на изменение в статусе " + request.getState());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -77,7 +78,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
                 query.select(root).where(
                         cb.equal(root.get("uuid"), entity.getUuid()),
-                        cb.equal(root.get("versionState"), EntityVersion.State.ACTIVE)
+                        cb.equal(root.get("version").get("stateType"), EntityVersion.StateType.ACTIVE)
                 );
 
                 em.createQuery(query)
@@ -85,17 +86,27 @@ public class HibernateVersioningSession implements VersioningEntityManager {
                         .stream()
                         .map(o -> (VersionedEntity) o)
                         .forEach(o -> {
-                            o.getVersion().setState(EntityVersion.State.HISTORY);
+                            o.getVersion().setStateType(EntityVersion.StateType.HISTORY);
                             em.persist(o);
                         });
 
-                switch (entity.getVersion().getState()) {
-                    case DRAFT -> entity.setVersion(new EntityVersion(EntityVersion.State.ACTIVE, versionDate));
-                    case PURGE -> entity.setVersion(new EntityVersion(EntityVersion.State.PASSIVE, versionDate));
+                switch (entity.getVersion().getStateType()) {
+                    case DRAFT -> entity.setVersion(EntityVersion.StateType.ACTIVE, versionDate);
+                    case PURGE -> entity.setVersion(EntityVersion.StateType.PASSIVE, versionDate);
                 }
                 em.persist(entity);
+
+
+
             }
         });
+
+        T entity = request.getRoot();
+        entity.setVersion(EntityVersion.StateType.ACTIVE, versionDate);
+        em.persist(entity);
+
+        request.setState(ChangeRequestState.Type.APPROVED, versionDate);
+        em.persist(request);
     }
 
     @Override

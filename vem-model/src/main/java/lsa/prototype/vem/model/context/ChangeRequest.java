@@ -1,16 +1,14 @@
 package lsa.prototype.vem.model.context;
 
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.version.Root;
 
 @MappedSuperclass
 abstract public class ChangeRequest<T extends Root> extends Particle {
+    private ChangeRequestState state = new ChangeRequestState(ChangeRequestState.Type.DRAFT, System.currentTimeMillis());
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;
-    private State state = State.DRAFT;
 
     public T getRoot() {
         return root;
@@ -20,15 +18,15 @@ abstract public class ChangeRequest<T extends Root> extends Particle {
         this.root = root;
     }
 
-    public State getState() {
+    public ChangeRequestState getState() {
         return state;
     }
 
-    public void setState(State state) {
+    public void setState(ChangeRequestState state) {
         this.state = state;
     }
 
-    public enum State {
-        DRAFT, ACTIVE, APPROVED, DECLINED
+    public void setState(ChangeRequestState.Type type, long date) {
+        this.state = new ChangeRequestState(type, date);
     }
 }

@@ -9,24 +9,24 @@ import jakarta.persistence.Enumerated;
 public class EntityVersion {
     @Enumerated(EnumType.STRING)
     @Column(name = "version_state")
-    private State state;
+    private StateType stateType;
     @Column(name = "version_date")
     private long date;
 
     public EntityVersion() {
     }
 
-    public EntityVersion(State state, long date) {
-        this.state = state;
+    public EntityVersion(StateType stateType, long date) {
+        this.stateType = stateType;
         this.date = date;
     }
 
-    public State getState() {
-        return state;
+    public StateType getStateType() {
+        return stateType;
     }
 
-    public void setState(State state) {
-        this.state = state;
+    public void setStateType(StateType state) {
+        this.stateType = state;
     }
 
     public long getDate() {
@@ -37,7 +37,7 @@ public class EntityVersion {
         this.date = date;
     }
 
-    public static enum State {
+    public static enum StateType {
         DRAFT, PURGE, ACTIVE, PASSIVE, HISTORY
     }
 }

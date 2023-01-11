@@ -7,9 +7,11 @@ import lsa.prototype.vem.engine.spi.VersioningEntityManager;
 import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
 import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
 import lsa.prototype.vem.engine.spi.schema.Schema;
+import lsa.prototype.vem.model.context.ChangeRequest;
+import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.context.PolymorphEntity;
-import lsa.prototype.vem.model.version.Leaf;
 import lsa.prototype.vem.model.version.EntityVersion;
+import lsa.prototype.vem.model.version.Leaf;
 import org.hibernate.Session;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
@@ -24,6 +26,7 @@ import vem.util.TestDatabase;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class MainTest {
     private final TestDatabase database = new TestDatabase();
@@ -47,12 +50,12 @@ public class MainTest {
 
 
                     Parcel parcel1 = new Parcel();
-                    parcel1.getVersion().setState(EntityVersion.State.ACTIVE);
+                    parcel1.getVersion().setStateType(EntityVersion.StateType.ACTIVE);
                     parcel1.setParent(store);
                     em.persist(parcel1);
 
                     Parcel parcel2 = new Parcel();
-                    parcel2.getVersion().setState(EntityVersion.State.PASSIVE);
+                    parcel2.getVersion().setStateType(EntityVersion.StateType.PASSIVE);
                     parcel2.setParent(store);
                     em.persist(parcel2);
 
@@ -125,7 +128,9 @@ public class MainTest {
 
             vem.em().getTransaction().begin();
 
-            vem.persist(store);
+            ChangeRequest<Store> request = vem.persist(store);
+
+            vem.affirm(request);
 
             vem.em().getTransaction().commit();
             vem.em().clear();
@@ -138,7 +143,14 @@ public class MainTest {
                     StoreChangeRequest.class
             ).getSingleResult();
 
-            Assertions.assertEquals(2, request.getUnits().size());
+
+            Assertions.assertEquals(2,
+                    request.getUnits().stream()
+                            .map(ChangeUnit::getLeaf)
+                            .map(o->em.find(o.getType(),o.getId()))
+                            .collect(Collectors.toSet())
+                            .size()
+            );
         }
     }
 

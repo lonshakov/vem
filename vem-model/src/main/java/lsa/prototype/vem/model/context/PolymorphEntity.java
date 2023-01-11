@@ -1,6 +1,5 @@
 package lsa.prototype.vem.model.context;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lsa.prototype.vem.model.basic.PersistedObject;
 
