@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.spi.meta;
+package lsa.prototype.vem.engine.spi.schema;
 
 import lsa.prototype.vem.model.basic.PersistedObject;
 

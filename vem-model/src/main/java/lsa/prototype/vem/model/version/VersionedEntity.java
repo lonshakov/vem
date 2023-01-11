@@ -1,25 +1,17 @@
 package lsa.prototype.vem.model.version;
 
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 import lsa.prototype.vem.model.basic.Particle;
 
 @MappedSuperclass
 public class VersionedEntity extends Particle {
-    @Enumerated(EnumType.STRING)
-    private State versionState = State.DRAFT;
-    private long versionDate;
+    private EntityVersion version = new EntityVersion(EntityVersion.State.DRAFT, System.currentTimeMillis());
 
-    public State getVersionState() {
-        return versionState;
+    public EntityVersion getVersion() {
+        return version;
     }
 
-    public void setVersionState(State versionState) {
-        this.versionState = versionState;
-    }
-
-    public static enum State {
-        DRAFT, PURGE, ACTIVE, PASSIVE, HISTORY
+    public void setVersion(EntityVersion version) {
+        this.version = version;
     }
 }

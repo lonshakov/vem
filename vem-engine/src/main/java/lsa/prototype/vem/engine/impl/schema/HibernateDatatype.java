@@ -1,9 +1,9 @@
-package lsa.prototype.vem.engine.impl.meta;
+package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
-import lsa.prototype.vem.engine.spi.meta.Datatype;
-import lsa.prototype.vem.engine.spi.meta.Meta;
-import lsa.prototype.vem.engine.spi.meta.Parameter;
+import lsa.prototype.vem.engine.spi.schema.Datatype;
+import lsa.prototype.vem.engine.spi.schema.Parameter;
+import lsa.prototype.vem.engine.spi.schema.Schema;
 import lsa.prototype.vem.model.basic.PersistedObject;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HibernateDatatype<T extends PersistedObject> implements Datatype<T> {
-    private final HibernateMeta meta;
+    private final HibernateSchema schema;
     private final ConcurrentHashMap<String, Parameter<T>> primitives = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Parameter<T>> references = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Parameter<T>> collections = new ConcurrentHashMap<>();
@@ -22,10 +22,10 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
     private final EntityPersister persister;
     private final EntityTypeDescriptor<T> descriptor;
 
-    public HibernateDatatype(Class<T> type, HibernateMeta meta) {
-        this.meta = meta;
+    public HibernateDatatype(Class<T> type, HibernateSchema schema) {
+        this.schema = schema;
 
-        MetamodelImplementor hibernateMetamodel = meta.getHibernateMetamodel();
+        MetamodelImplementor hibernateMetamodel = schema.getHibernateMetamodel();
         descriptor = hibernateMetamodel.entity(type);
         persister = hibernateMetamodel.entityPersister(type);
 
@@ -94,8 +94,8 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
     }
 
     @Override
-    public Meta getMeta() {
-        return meta;
+    public Schema getSchema() {
+        return schema;
     }
 
 }

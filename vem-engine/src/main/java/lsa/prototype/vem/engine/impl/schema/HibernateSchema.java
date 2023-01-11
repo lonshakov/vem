@@ -1,19 +1,19 @@
-package lsa.prototype.vem.engine.impl.meta;
+package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.EntityType;
-import lsa.prototype.vem.engine.spi.meta.Datatype;
-import lsa.prototype.vem.engine.spi.meta.Meta;
+import lsa.prototype.vem.engine.spi.schema.Datatype;
+import lsa.prototype.vem.engine.spi.schema.Schema;
 import lsa.prototype.vem.model.basic.PersistedObject;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HibernateMeta implements Meta {
+public class HibernateSchema implements Schema {
     private final ConcurrentHashMap<Class<?>, Datatype<?>> datatypes = new ConcurrentHashMap<>();
     private final MetamodelImplementor metamodel;
 
-    public HibernateMeta(MetamodelImplementor metamodel) {
+    public HibernateSchema(MetamodelImplementor metamodel) {
         this.metamodel = metamodel;
         for (EntityType<?> entityType : metamodel.getEntities()) {
             Class<?> type = entityType.getJavaType();

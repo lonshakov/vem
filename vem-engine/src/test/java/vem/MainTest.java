@@ -2,13 +2,14 @@ package vem;
 
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.HibernateVersioningSessionFactory;
-import lsa.prototype.vem.engine.impl.meta.HibernateMeta;
+import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.engine.spi.VersioningEntityManager;
 import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
-import lsa.prototype.vem.engine.spi.meta.HistoryMapping;
-import lsa.prototype.vem.engine.spi.meta.Meta;
+import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
+import lsa.prototype.vem.engine.spi.schema.Schema;
+import lsa.prototype.vem.model.context.PolymorphEntity;
 import lsa.prototype.vem.model.version.Leaf;
-import lsa.prototype.vem.model.version.VersionedEntity;
+import lsa.prototype.vem.model.version.EntityVersion;
 import org.hibernate.Session;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.internal.SessionImpl;
@@ -46,12 +47,12 @@ public class MainTest {
 
 
                     Parcel parcel1 = new Parcel();
-                    parcel1.setVersionState(VersionedEntity.State.ACTIVE);
+                    parcel1.getVersion().setState(EntityVersion.State.ACTIVE);
                     parcel1.setParent(store);
                     em.persist(parcel1);
 
                     Parcel parcel2 = new Parcel();
-                    parcel2.setVersionState(VersionedEntity.State.PASSIVE);
+                    parcel2.getVersion().setState(EntityVersion.State.PASSIVE);
                     parcel2.setParent(store);
                     em.persist(parcel2);
 
@@ -94,7 +95,8 @@ public class MainTest {
                                     "select r from StoreChangeRequest r where r.root.name = 'ozon'",
                                     StoreChangeRequest.class)
                             .getSingleResult();
-                    Leaf<?> queriedLeaf = queriedRequest.getUnits().stream().findFirst().get().getLeaf();
+                    PolymorphEntity polymorph = queriedRequest.getUnits().stream().findFirst().get().getLeaf();
+                    Leaf<?> queriedLeaf = (Leaf<?>) em.find(polymorph.getType(), polymorph.getId());
 
                     Assertions.assertEquals("ozon", queriedRequest.getRoot().getName());
                     Assertions.assertEquals("notebook", ((Parcel) queriedLeaf).getName());
@@ -127,8 +129,7 @@ public class MainTest {
 
             vem.em().getTransaction().commit();
             vem.em().clear();
-
-            System.out.println();
+            vem.em().getEntityManagerFactory().getCache().evictAll();
         }
 
         try (EntityManager em = database.newEntityManager()) {
@@ -144,10 +145,10 @@ public class MainTest {
     @Test
     void testMetadataCreation() {
         try (EntityManager em = database.newEntityManager()) {
-            Meta meta = new HibernateMeta(
+            Schema schema = new HibernateSchema(
                     em.unwrap(SessionImpl.class).getMetamodel()
             );
-            HistoryMapping historyMapping = new HistoryMapping(meta);
+            HistoryMappings historyMappings = new HistoryMappings(schema);
         }
     }
 }

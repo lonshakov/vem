@@ -1,8 +1,8 @@
-package lsa.prototype.vem.engine.impl.meta;
+package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
-import lsa.prototype.vem.engine.spi.meta.Datatype;
-import lsa.prototype.vem.engine.spi.meta.Parameter;
+import lsa.prototype.vem.engine.spi.schema.Datatype;
+import lsa.prototype.vem.engine.spi.schema.Parameter;
 import lsa.prototype.vem.model.basic.PersistedObject;
 import org.hibernate.persister.entity.EntityPersister;
 
@@ -30,7 +30,7 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
     @Override
     public Datatype<?> getParameterDatatype() {
         return !isPrimitive()
-                ? structure.getMeta().datatype((Class<? extends PersistedObject>) getType())
+                ? structure.getSchema().datatype((Class<? extends PersistedObject>) getType())
                 : null;
     }
 

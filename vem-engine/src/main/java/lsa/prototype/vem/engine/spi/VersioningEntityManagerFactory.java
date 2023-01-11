@@ -1,12 +1,15 @@
 package lsa.prototype.vem.engine.spi;
 
-import lsa.prototype.vem.engine.spi.meta.HistoryMapping;
-import lsa.prototype.vem.engine.spi.meta.Meta;
+import jakarta.persistence.EntityManagerFactory;
+import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
+import lsa.prototype.vem.engine.spi.schema.Schema;
 
 public interface VersioningEntityManagerFactory {
     VersioningEntityManager createEntityManager();
 
-    Meta meta();
+    Schema getSchema();
 
-    HistoryMapping getHistoryMapping();
+    HistoryMappings getHistoryMapping();
+
+    EntityManagerFactory getJpaFactory();
 }

@@ -1,35 +1,53 @@
 package lsa.prototype.vem.engine.impl;
 
-import lsa.prototype.vem.engine.impl.meta.HibernateMeta;
+import jakarta.persistence.EntityManagerFactory;
+import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
+import lsa.prototype.vem.engine.spi.PersistenceProcessor;
 import lsa.prototype.vem.engine.spi.VersioningEntityManager;
 import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
-import lsa.prototype.vem.engine.spi.meta.HistoryMapping;
-import lsa.prototype.vem.engine.spi.meta.Meta;
+import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
+import lsa.prototype.vem.engine.spi.schema.Schema;
 import org.hibernate.internal.SessionFactoryImpl;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HibernateVersioningSessionFactory implements VersioningEntityManagerFactory {
     private final SessionFactoryImpl factory;
-    private final Meta meta;
-    private final HistoryMapping historyMapping;
+    private final Schema schema;
+    private final HistoryMappings historyMappings;
+    private final ConcurrentHashMap<String, PersistenceProcessor> processors = new ConcurrentHashMap<>();
 
     public HibernateVersioningSessionFactory(SessionFactoryImpl factory) {
         this.factory = factory;
-        meta = new HibernateMeta(factory.getMetamodel());
-        historyMapping = new HistoryMapping(meta);
+        schema = new HibernateSchema(factory.getMetamodel());
+        historyMappings = new HistoryMappings(schema);
+
+        //default values
+        processors.put("recursive-persist", new Persister());
+        processors.put("recursive-merge", new Persister());
     }
 
     @Override
     public VersioningEntityManager createEntityManager() {
-        return new HibernateVersioningSession(this, factory.createEntityManager());
+        return new HibernateVersioningSession(
+                this,
+                factory.createEntityManager(),
+                processors
+        );
     }
 
     @Override
-    public Meta meta() {
-        return meta;
+    public Schema getSchema() {
+        return schema;
     }
 
     @Override
-    public HistoryMapping getHistoryMapping() {
-        return historyMapping;
+    public HistoryMappings getHistoryMapping() {
+        return historyMappings;
+    }
+
+    @Override
+    public EntityManagerFactory getJpaFactory() {
+        return factory;
     }
 }

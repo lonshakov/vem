@@ -14,19 +14,6 @@ import vem.entity.Store;
 public class StoreChangeUnit extends ChangeUnit<Store> {
     @ManyToOne
     private StoreChangeRequest request;
-    @Any(metaDef = "LeafMapping", metaColumn = @Column(name = "leaf_type"))
-    @JoinColumn(name = "leaf_id")
-    private Leaf<?> leaf;
-
-    @Override
-    public void setLeaf(Leaf<?> leaf) {
-        this.leaf = leaf;
-    }
-
-    @Override
-    public Leaf<?> getLeaf() {
-        return leaf;
-    }
 
     @Override
     public ChangeRequest<Store> getRequest() {

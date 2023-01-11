@@ -1,55 +1,106 @@
 package lsa.prototype.vem.engine.impl;
 
 import jakarta.persistence.EntityManager;
-import lsa.prototype.vem.engine.spi.VersioningEntityManager;
-import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
-import lsa.prototype.vem.engine.spi.meta.Datatype;
-import lsa.prototype.vem.engine.spi.meta.Parameter;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import lsa.prototype.vem.engine.spi.*;
 import lsa.prototype.vem.model.context.ChangeRequest;
-import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.Leaf;
 import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.VersionedEntity;
 
-//TODO
+import java.util.HashMap;
+import java.util.Map;
+
 public class HibernateVersioningSession implements VersioningEntityManager {
     private final VersioningEntityManagerFactory factory;
     private final EntityManager em;
+    private final Map<String, PersistenceProcessor> processors;
+    private final Changer changer;
 
-    public HibernateVersioningSession(VersioningEntityManagerFactory factory, EntityManager em) {
+    public HibernateVersioningSession(VersioningEntityManagerFactory factory, EntityManager em, Map<String, PersistenceProcessor> processors) {
         this.factory = factory;
         this.em = em;
+        this.processors = new HashMap<>(processors);
+        changer = new ChangerImpl(this);
     }
 
     @Override
     public <T extends Root, R extends ChangeRequest<T>> R persist(T entity) {
-        R request = (R) factory().getHistoryMapping().get(entity).request().instantiate();
+        if (entity == null)
+            return null;
+
+        R request = getChanger().instantiate(entity);
 
         em.persist(request);
         em.persist(entity);
-        request.setRoot(entity);
 
-        walk(entity, request);
+        processors.get("recursive-persist").process(entity, entity, request, this);
 
         return request;
     }
 
     @Override
     public <T extends Root, R extends ChangeRequest<T>> R merge(T entity) {
-        R request = (R) factory().getHistoryMapping().get(entity).request().instantiate();
+        if (entity == null || entity.getId() == 0)
+            return null;
+
         T storedEntity = em.find((Class<T>) entity.getClass(), entity.getId());
+        R request = getChanger().instantiate(storedEntity);
 
         em.persist(request);
-        request.setRoot(storedEntity);
 
-        //todo
+        processors.get("recursive-merge").process(storedEntity, entity, request, this);
 
         return request;
     }
 
     @Override
     public <T extends Root, R extends ChangeRequest<T>> R remove(T entity) {
+        //todo
         return null;
+    }
+
+    @Override
+    public <T extends Root, R extends ChangeRequest<T>> void affirm(R request) {
+        if (!ChangeRequest.State.DRAFT.equals(request.getState()))
+            throw new VersioningException("Ошибка при попытке подтвердить заявку на изменение в статусе " + request.getState());
+
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        long versionDate = System.currentTimeMillis();
+
+        getChanger().fetchLeaves(request).forEach((type, entities) -> {
+            for (VersionedEntity entity : entities) {
+
+                CriteriaQuery<Object> query = cb.createQuery();
+                jakarta.persistence.criteria.Root<?> root = query.from(type);
+
+                query.select(root).where(
+                        cb.equal(root.get("uuid"), entity.getUuid()),
+                        cb.equal(root.get("versionState"), EntityVersion.State.ACTIVE)
+                );
+
+                em.createQuery(query)
+                        .getResultList()
+                        .stream()
+                        .map(o -> (VersionedEntity) o)
+                        .forEach(o -> {
+                            o.getVersion().setState(EntityVersion.State.HISTORY);
+                            em.persist(o);
+                        });
+
+                switch (entity.getVersion().getState()) {
+                    case DRAFT -> entity.setVersion(new EntityVersion(EntityVersion.State.ACTIVE, versionDate));
+                    case PURGE -> entity.setVersion(new EntityVersion(EntityVersion.State.PASSIVE, versionDate));
+                }
+                em.persist(entity);
+            }
+        });
+    }
+
+    @Override
+    public <T extends Root, R extends ChangeRequest<T>> void reject(R request) {
+
     }
 
     @Override
@@ -58,44 +109,17 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public VersioningEntityManagerFactory factory() {
+    public VersioningEntityManagerFactory getFactory() {
         return factory;
-    }
-
-    private <T extends Root, R extends ChangeRequest<T>, V extends VersionedEntity> void walk(V entity, R request) {
-        Datatype<V> datatype = meta().datatype(entity);
-
-        for (Parameter<V> parameter : datatype.collections().values()) {
-            for (Leaf<VersionedEntity> leaf : (Iterable<Leaf<VersionedEntity>>) parameter.get(entity)) {
-                leaf.setParent(entity);
-                bind(request, leaf);
-                walk(leaf, request);
-            }
-        }
-
-        for (Parameter<V> parameter : datatype.references().values()) {
-            if (parameter.getName().equals("parent")) {
-                continue;
-            }
-            Leaf<VersionedEntity> leaf = (Leaf<VersionedEntity>) parameter.get(entity);
-            if (leaf == null) {
-                continue;
-            }
-            bind(request, leaf);
-        }
-    }
-
-
-    private <T extends Root, R extends ChangeRequest<T>> void bind(R request, Leaf<?> leaf) {
-        ChangeUnit<T> unit = (ChangeUnit<T>) factory().getHistoryMapping().get(leaf).unit().instantiate();
-        unit.setRequest(request);
-        unit.setLeaf(leaf);
-        em.persist(leaf);
-        em.persist(unit);
     }
 
     @Override
     public void close() {
         em.close();
+    }
+
+    @Override
+    public Changer getChanger() {
+        return changer;
     }
 }
