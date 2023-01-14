@@ -23,7 +23,7 @@ public class HistoryMapping<T extends Root> {
         return (Datatype<C>) request;
     }
 
-    public <U extends ChangeUnit<T>> Datatype<U> unit() {
+    public <U extends ChangeUnit<ChangeRequest<T>>> Datatype<U> unit() {
         return (Datatype<U>) unit;
     }
 }

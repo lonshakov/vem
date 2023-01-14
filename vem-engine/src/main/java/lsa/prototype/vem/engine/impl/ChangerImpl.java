@@ -29,7 +29,9 @@ public class ChangerImpl implements Changer {
         return request;
     }
 
-    public <T extends Root> Map<Class<?>, List<ChangeUnit<T>>> fetchUnits(ChangeRequest<T> request) {
+    @Override
+    public <R extends ChangeRequest<?>>
+    Map<Class<?>, List<ChangeUnit<R>>> fetchUnits(R request) {
         Class<?> unitType = vem.getHistoryMapping()
                 .get(request.getRoot())
                 .unit()
@@ -42,11 +44,12 @@ public class ChangerImpl implements Changer {
                 .where(cb().equal(root.get("request"), request));
 
         return vem.em().createQuery(query).getResultList().stream()
-                .map(o -> (ChangeUnit<T>) o)
+                .map(o -> (ChangeUnit<R>) o)
                 .collect(Collectors.groupingBy(o -> o.getLeaf().getType()));
     }
 
-    public <T extends Root> Map<Class<?>, List<VersionedEntity>> fetchLeaves(ChangeRequest<T> request) {
+    public <R extends ChangeRequest<?>>
+    Map<Class<?>, List<VersionedEntity>> fetchLeaves(R request) {
         return fetchUnits(request).entrySet().stream().map(bucket -> {
             Set<Long> identifiers = bucket.getValue().stream().map(u -> u.getLeaf().getId()).collect(Collectors.toSet());
 

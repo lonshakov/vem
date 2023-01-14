@@ -39,7 +39,7 @@ public class Persister implements PersistenceProcessor {
     }
 
     private <T extends Root, R extends ChangeRequest<T>> void bind(R request, Leaf<?> leaf, VersioningEntityManager vem) {
-        ChangeUnit<T> unit = (ChangeUnit<T>) vem.getFactory().getHistoryMapping().get(leaf).unit().instantiate();
+        ChangeUnit<R> unit = (ChangeUnit<R>) vem.getFactory().getHistoryMapping().get(leaf).unit().instantiate();
         unit.setRequest(request);
         vem.em().persist(leaf);
         unit.setLeaf(new PolymorphEntity(leaf));

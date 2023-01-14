@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.version.Root;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @MappedSuperclass
-abstract public class ChangeRequest<T extends Root> extends Particle {
+public class ChangeRequest<T extends Root> extends Particle {
     private ChangeRequestState state = new ChangeRequestState(ChangeRequestState.Type.DRAFT, System.currentTimeMillis());
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;

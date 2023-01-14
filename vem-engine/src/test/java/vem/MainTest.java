@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class MainTest {
     private final TestDatabase database = new TestDatabase();
     private final BiConsumer<Consumer<EntityManager>, Consumer<EntityManager>> tester = (conditions, checks) -> {
-        try (EntityManager em = database.newEntityManager()) {
+        try (EntityManager em = database.getEntityManagerFactory().createEntityManager()) {
             em.unwrap(Session.class).enableFilter("CurrentVersion");
             em.getTransaction().begin();
             conditions.accept(em);
@@ -47,7 +47,6 @@ public class MainTest {
                 (em) -> {
                     Store store = new Store();
                     store.setName("x5");
-
 
                     Parcel parcel1 = new Parcel();
                     parcel1.getVersion().setStateType(EntityVersion.StateType.ACTIVE);
@@ -109,11 +108,7 @@ public class MainTest {
 
     @Test
     void testVersionedPersist() {
-        VersioningEntityManagerFactory factory = new HibernateVersioningSessionFactory(
-                database.getEntityManagerFactory().unwrap(SessionFactoryImpl.class)
-        );
-
-        try (VersioningEntityManager vem = factory.createEntityManager()) {
+        try (VersioningEntityManager vem = database.getVersioningEntityManagerFactory().createEntityManager()) {
 
             Store store = new Store();
             store.setName("Macy's");
@@ -137,7 +132,7 @@ public class MainTest {
             vem.em().getEntityManagerFactory().getCache().evictAll();
         }
 
-        try (EntityManager em = database.newEntityManager()) {
+        try (EntityManager em = database.getEntityManagerFactory().createEntityManager()) {
             StoreChangeRequest request = em.createQuery(
                     "select c from StoreChangeRequest c where c.root.name = 'Macy''s'",
                     StoreChangeRequest.class
@@ -156,10 +151,8 @@ public class MainTest {
 
     @Test
     void testMetadataCreation() {
-        try (EntityManager em = database.newEntityManager()) {
-            Schema schema = new HibernateSchema(
-                    em.unwrap(SessionImpl.class).getMetamodel()
-            );
+        try (EntityManager em = database.getEntityManagerFactory().createEntityManager()) {
+            Schema schema = new HibernateSchema(em.unwrap(SessionImpl.class).getMetamodel());
             HistoryMappings historyMappings = new HistoryMappings(schema);
         }
     }

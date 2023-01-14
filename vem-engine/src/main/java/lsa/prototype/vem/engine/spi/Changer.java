@@ -11,7 +11,7 @@ import java.util.Map;
 public interface Changer {
     <T extends Root, R extends ChangeRequest<T>> R instantiate(T entity);
 
-    <T extends Root> Map<Class<?>, List<ChangeUnit<T>>> fetchUnits(ChangeRequest<T> request);
+    <R extends ChangeRequest<?>> Map<Class<?>, List<ChangeUnit<R>>> fetchUnits(R request);
 
-    <T extends Root> Map<Class<?>, List<VersionedEntity>> fetchLeaves(ChangeRequest<T> request);
+    <R extends ChangeRequest<?>> Map<Class<?>, List<VersionedEntity>> fetchLeaves(R request);
 }
