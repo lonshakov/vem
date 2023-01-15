@@ -6,17 +6,17 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
 @Embeddable
-public class ChangeRequestState {
+public class ChangeState {
     @Enumerated(EnumType.STRING)
     @Column(name = "request_state")
     private StateType type = StateType.DRAFT;
     @Column(name = "request_date")
     private long date;
 
-    public ChangeRequestState() {
+    public ChangeState() {
     }
 
-    public ChangeRequestState(StateType type, long date) {
+    public ChangeState(StateType type, long date) {
         this.type = type;
         this.date = date;
     }

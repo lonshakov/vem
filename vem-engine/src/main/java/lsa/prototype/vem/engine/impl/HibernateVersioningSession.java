@@ -5,7 +5,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 
 import lsa.prototype.vem.model.context.ChangeRequest;
-import lsa.prototype.vem.model.context.ChangeRequestState;
+import lsa.prototype.vem.model.context.ChangeState;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.Root;
 import lsa.prototype.vem.model.version.VersionedEntity;
@@ -65,7 +65,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> void affirm(ChangeRequest<T> request) {
-        if (!ChangeRequestState.StateType.DRAFT.equals(request.getState().getStateType()))
+        if (!ChangeState.StateType.DRAFT.equals(request.getState().getStateType()))
             throw new VersioningException("Ошибка при попытке подтвердить заявку на изменение в статусе " + request.getState());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -105,7 +105,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         entity.setVersion(EntityVersion.StateType.ACTIVE, versionDate);
         em.persist(entity);
 
-        request.setState(ChangeRequestState.StateType.APPROVED, versionDate);
+        request.setState(ChangeState.StateType.APPROVED, versionDate);
         em.persist(request);
     }
 
