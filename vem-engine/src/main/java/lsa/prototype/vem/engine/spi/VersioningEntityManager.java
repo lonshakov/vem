@@ -7,20 +7,15 @@ import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.Root;
 
 public interface VersioningEntityManager extends AutoCloseable {
-    <T extends Root, R extends ChangeRequest<T>>
-    R persist(T entity);
+    <T extends Root> ChangeRequest<T> persist(T entity);
 
-    <T extends Root, R extends ChangeRequest<T>>
-    R merge(T entity);
+    <T extends Root> ChangeRequest<T> merge(T entity);
 
-    <T extends Root, R extends ChangeRequest<T>>
-    R remove(T entity);
+    <T extends Root> ChangeRequest<T> remove(T entity);
 
-    <T extends Root, R extends ChangeRequest<T>>
-    void affirm(R request);
+    <T extends Root> void affirm(ChangeRequest<T> request);
 
-    <T extends Root, R extends ChangeRequest<T>>
-    void reject(R request);
+    <T extends Root> void reject(ChangeRequest<T> request);
 
     EntityManager em();
 
@@ -28,7 +23,7 @@ public interface VersioningEntityManager extends AutoCloseable {
         return getFactory().getSchema();
     }
 
-    default HistoryMappings getHistoryMapping() {
+    default HistoryMappings getHistoryMappings() {
         return getFactory().getHistoryMapping();
     }
 

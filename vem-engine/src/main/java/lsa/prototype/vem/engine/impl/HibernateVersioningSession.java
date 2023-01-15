@@ -27,11 +27,11 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Root, R extends ChangeRequest<T>> R persist(T entity) {
+    public <T extends Root> ChangeRequest<T> persist(T entity) {
         if (entity == null)
             return null;
 
-        R request = getChanger().instantiate(entity);
+        ChangeRequest<T> request = getChanger().instantiate(entity);
 
         em.persist(request);
         em.persist(entity);
@@ -42,12 +42,12 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Root, R extends ChangeRequest<T>> R merge(T entity) {
+    public <T extends Root> ChangeRequest<T> merge(T entity) {
         if (entity == null || entity.getId() == 0)
             return null;
 
         T storedEntity = em.find((Class<T>) entity.getClass(), entity.getId());
-        R request = getChanger().instantiate(storedEntity);
+        ChangeRequest<T> request = getChanger().instantiate(storedEntity);
 
         em.persist(request);
 
@@ -57,20 +57,20 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Root, R extends ChangeRequest<T>> R remove(T entity) {
+    public <T extends Root> ChangeRequest<T> remove(T entity) {
         //todo
         return null;
     }
 
     @Override
-    public <T extends Root, R extends ChangeRequest<T>> void affirm(R request) {
+    public <T extends Root> void affirm(ChangeRequest<T> request) {
         if (!ChangeRequestState.Type.DRAFT.equals(request.getState().getStateType()))
             throw new VersioningException("Ошибка при попытке подтвердить заявку на изменение в статусе " + request.getState());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         long versionDate = System.currentTimeMillis();
 
-        getChanger().fetchLeaves(request).forEach((type, entities) -> {
+        getChanger().map(request).forEach((type, entities) -> {
             for (VersionedEntity entity : entities) {
 
                 CriteriaQuery<Object> query = cb.createQuery();
@@ -97,7 +97,6 @@ public class HibernateVersioningSession implements VersioningEntityManager {
                 em.persist(entity);
 
 
-
             }
         });
 
@@ -110,7 +109,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Root, R extends ChangeRequest<T>> void reject(R request) {
+    public <T extends Root> void reject(ChangeRequest<T> request) {
 
     }
 

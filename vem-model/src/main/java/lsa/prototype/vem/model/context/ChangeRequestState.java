@@ -31,7 +31,7 @@ public class ChangeRequestState {
         this.date = date;
     }
 
-    public  enum Type {
+    public enum Type {
         DRAFT, ACTIVE, APPROVED, DECLINED
     }
 }

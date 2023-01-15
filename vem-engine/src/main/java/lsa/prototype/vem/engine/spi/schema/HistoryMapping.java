@@ -15,15 +15,15 @@ public class HistoryMapping<T extends Root> {
         this.unit = unit;
     }
 
-    public Datatype<T> root() {
+    public Datatype<T> getRootDatatype() {
         return root;
     }
 
-    public <C extends ChangeRequest<T>> Datatype<C> request() {
+    public <C extends ChangeRequest<T>> Datatype<C> getRequestDatatype() {
         return (Datatype<C>) request;
     }
 
-    public <U extends ChangeUnit<ChangeRequest<T>>> Datatype<U> unit() {
+    public <U extends ChangeUnit<ChangeRequest<T>>> Datatype<U> getUnitDatatype() {
         return (Datatype<U>) unit;
     }
 }

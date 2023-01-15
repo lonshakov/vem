@@ -1,11 +1,10 @@
 package lsa.prototype.vem.model.context;
 
-import jakarta.persistence.*;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.version.Root;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @MappedSuperclass
 public class ChangeRequest<T extends Root> extends Particle {

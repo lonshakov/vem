@@ -20,7 +20,7 @@ public class HistoryMappings {
                     Datatype<? extends Root> root = (Datatype<? extends Root>) request.reference("root").getParameterDatatype();
                     return new HistoryMapping<>(root, request, unit);
                 })
-                .collect(Collectors.toMap(e -> e.root().getJavaType(), e -> e));
+                .collect(Collectors.toMap(e -> e.getRootDatatype().getJavaType(), e -> e));
 
 
         for (Datatype<?> datatype : schema) {
@@ -31,11 +31,11 @@ public class HistoryMappings {
         }
     }
 
-    public <T extends VersionedEntity> HistoryMapping<?> get(Class<T> type) {
+    public <V extends VersionedEntity> HistoryMapping<?> get(Class<V> type) {
         return mappings.get(type);
     }
 
-    public <T extends VersionedEntity> HistoryMapping<?> get(T object) {
+    public <V extends VersionedEntity> HistoryMapping<?> get(V object) {
         return get(object.getClass());
     }
 
