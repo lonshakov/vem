@@ -1,8 +1,6 @@
 package lsa.prototype.vem.model.context;
 
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.version.Root;
 
@@ -11,6 +9,16 @@ public class ChangeRequest<T extends Root> extends Particle {
     private ChangeState state = new ChangeState(ChangeState.StateType.DRAFT, System.currentTimeMillis());
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;
+    @AttributeOverrides({
+            @AttributeOverride(name = "user", column = @Column(name = "creation_user")),
+            @AttributeOverride(name = "date", column = @Column(name = "creation_date"))
+    })
+    private Sign creationSign;
+    @AttributeOverrides({
+            @AttributeOverride(name = "user", column = @Column(name = "solution_user")),
+            @AttributeOverride(name = "date", column = @Column(name = "solution_date"))
+    })
+    private Sign solutionSing;
 
     public T getRoot() {
         return root;
@@ -30,5 +38,21 @@ public class ChangeRequest<T extends Root> extends Particle {
 
     public void setState(ChangeState.StateType type, long date) {
         this.state = new ChangeState(type, date);
+    }
+
+    public Sign getCreationSign() {
+        return creationSign;
+    }
+
+    public void setCreationSign(Sign creationSign) {
+        this.creationSign = creationSign;
+    }
+
+    public Sign getSolutionSing() {
+        return solutionSing;
+    }
+
+    public void setSolutionSing(Sign solutionSing) {
+        this.solutionSing = solutionSing;
     }
 }

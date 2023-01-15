@@ -3,7 +3,6 @@ package lsa.prototype.vem.engine.impl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeState;
 import lsa.prototype.vem.model.version.EntityVersion;

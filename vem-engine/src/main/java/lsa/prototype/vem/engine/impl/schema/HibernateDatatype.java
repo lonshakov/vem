@@ -1,10 +1,10 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
+import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import lsa.prototype.vem.spi.schema.Schema;
-import lsa.prototype.vem.model.basic.PersistedObject;
 import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.EntityPersister;

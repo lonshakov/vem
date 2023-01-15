@@ -2,7 +2,6 @@ package lsa.prototype.vem.engine.impl;
 
 import jakarta.persistence.EntityManagerFactory;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
-
 import lsa.prototype.vem.spi.PersistenceProcessor;
 import lsa.prototype.vem.spi.VersioningEntityManager;
 import lsa.prototype.vem.spi.VersioningEntityManagerFactory;

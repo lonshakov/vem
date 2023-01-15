@@ -2,12 +2,12 @@ package vem;
 
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
-import lsa.prototype.vem.spi.VersioningEntityManager;
-import lsa.prototype.vem.spi.schema.HistoryMappings;
-import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.Leaf;
+import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.schema.HistoryMappings;
+import lsa.prototype.vem.spi.schema.Schema;
 import org.hibernate.Session;
 import org.hibernate.internal.SessionImpl;
 import org.junit.jupiter.api.Assertions;

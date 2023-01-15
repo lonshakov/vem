@@ -1,10 +1,10 @@
 package lsa.prototype.vem.spi;
 
 import jakarta.persistence.EntityManager;
-import lsa.prototype.vem.spi.schema.HistoryMappings;
-import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.spi.schema.HistoryMappings;
+import lsa.prototype.vem.spi.schema.Schema;
 
 public interface VersioningEntityManager extends AutoCloseable {
     <T extends Root> ChangeRequest<T> persist(T entity);
