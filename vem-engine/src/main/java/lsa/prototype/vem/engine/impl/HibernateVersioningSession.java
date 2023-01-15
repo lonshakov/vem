@@ -65,7 +65,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> void affirm(ChangeRequest<T> request) {
-        if (!ChangeRequestState.Type.DRAFT.equals(request.getState().getStateType()))
+        if (!ChangeRequestState.StateType.DRAFT.equals(request.getState().getStateType()))
             throw new VersioningException("Ошибка при попытке подтвердить заявку на изменение в статусе " + request.getState());
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -105,7 +105,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         entity.setVersion(EntityVersion.StateType.ACTIVE, versionDate);
         em.persist(entity);
 
-        request.setState(ChangeRequestState.Type.APPROVED, versionDate);
+        request.setState(ChangeRequestState.StateType.APPROVED, versionDate);
         em.persist(request);
     }
 

@@ -1,25 +1,31 @@
 package lsa.prototype.vem.model.context;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Embeddable
 public class ChangeRequestState {
-    private Type type = Type.DRAFT;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_state")
+    private StateType type = StateType.DRAFT;
+    @Column(name = "request_date")
     private long date;
 
     public ChangeRequestState() {
     }
 
-    public ChangeRequestState(Type type, long date) {
+    public ChangeRequestState(StateType type, long date) {
         this.type = type;
         this.date = date;
     }
 
-    public Type getStateType() {
+    public StateType getStateType() {
         return type;
     }
 
-    public void setStateType(Type type) {
+    public void setStateType(StateType type) {
         this.type = type;
     }
 
@@ -31,7 +37,7 @@ public class ChangeRequestState {
         this.date = date;
     }
 
-    public enum Type {
+    public enum StateType {
         DRAFT, ACTIVE, APPROVED, DECLINED
     }
 }

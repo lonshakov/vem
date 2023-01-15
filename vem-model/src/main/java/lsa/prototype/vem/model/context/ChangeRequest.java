@@ -8,7 +8,7 @@ import lsa.prototype.vem.model.version.Root;
 
 @MappedSuperclass
 public class ChangeRequest<T extends Root> extends Particle {
-    private ChangeRequestState state = new ChangeRequestState(ChangeRequestState.Type.DRAFT, System.currentTimeMillis());
+    private ChangeRequestState state = new ChangeRequestState(ChangeRequestState.StateType.DRAFT, System.currentTimeMillis());
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;
 
@@ -28,7 +28,7 @@ public class ChangeRequest<T extends Root> extends Particle {
         this.state = state;
     }
 
-    public void setState(ChangeRequestState.Type type, long date) {
+    public void setState(ChangeRequestState.StateType type, long date) {
         this.state = new ChangeRequestState(type, date);
     }
 }
