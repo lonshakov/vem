@@ -124,6 +124,7 @@ public class MainTest {
                     parcel.getItems().add(item);
 
                     ChangeRequest<Store> request = vem.persist(store);
+                    vem.publish(request);
                     vem.affirm(request);
                 },
                 (vem) -> {

@@ -38,6 +38,6 @@ public class ChangeState {
     }
 
     public enum StateType {
-        DRAFT, ACTIVE, APPROVED, DECLINED
+        DRAFT, PUBLISHED, AFFIRMED, REJECTED
     }
 }

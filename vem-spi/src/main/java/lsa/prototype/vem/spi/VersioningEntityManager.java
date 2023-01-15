@@ -13,6 +13,8 @@ public interface VersioningEntityManager extends AutoCloseable {
 
     <T extends Root> ChangeRequest<T> remove(T entity);
 
+    <T extends Root> void publish(ChangeRequest<T> request);
+
     <T extends Root> void affirm(ChangeRequest<T> request);
 
     <T extends Root> void reject(ChangeRequest<T> request);

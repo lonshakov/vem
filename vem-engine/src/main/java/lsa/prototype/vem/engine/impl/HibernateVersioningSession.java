@@ -63,9 +63,14 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
+    public <T extends Root> void publish(ChangeRequest<T> request) {
+        checkState(request, "publish", ChangeState.StateType.DRAFT);
+        request.getState().setStateType(ChangeState.StateType.PUBLISHED);
+    }
+
+    @Override
     public <T extends Root> void affirm(ChangeRequest<T> request) {
-        if (!ChangeState.StateType.DRAFT.equals(request.getState().getStateType()))
-            throw new VersioningException("Ошибка при попытке подтвердить заявку на изменение в статусе " + request.getState());
+        checkState(request, "affirm", ChangeState.StateType.PUBLISHED);
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         long versionDate = System.currentTimeMillis();
@@ -104,13 +109,14 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         entity.setVersion(EntityVersion.StateType.ACTIVE, versionDate);
         em.persist(entity);
 
-        request.setState(ChangeState.StateType.APPROVED, versionDate);
+        request.setState(ChangeState.StateType.AFFIRMED, versionDate);
         em.persist(request);
     }
 
     @Override
     public <T extends Root> void reject(ChangeRequest<T> request) {
-
+        checkState(request, "reject", ChangeState.StateType.PUBLISHED);
+        //todo
     }
 
     @Override
@@ -131,5 +137,10 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     @Override
     public Changer getChanger() {
         return changer;
+    }
+
+    private static <T extends Root> void checkState(ChangeRequest<T> request, String methodName, ChangeState.StateType stateType) {
+        if (!stateType.equals(request.getState().getStateType()))
+            throw new VersioningException("Ошибка при попытке обработать методом " + methodName + " заявку на изменение в статусе " + request.getState());
     }
 }
