@@ -1,15 +1,16 @@
 package lsa.prototype.vem.engine.impl;
 
-import lsa.prototype.vem.engine.spi.PersistenceProcessor;
-import lsa.prototype.vem.engine.spi.VersioningEntityManager;
-import lsa.prototype.vem.engine.spi.schema.Datatype;
-import lsa.prototype.vem.engine.spi.schema.Parameter;
+
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.context.PolymorphEntity;
 import lsa.prototype.vem.model.version.Leaf;
 import lsa.prototype.vem.model.version.Root;
 import lsa.prototype.vem.model.version.VersionedEntity;
+import lsa.prototype.vem.spi.PersistenceProcessor;
+import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.schema.Datatype;
+import lsa.prototype.vem.spi.schema.Parameter;
 
 public class Persister implements PersistenceProcessor {
     @Override

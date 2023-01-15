@@ -1,8 +1,8 @@
-package lsa.prototype.vem.engine.spi;
+package lsa.prototype.vem.spi;
 
 import jakarta.persistence.EntityManagerFactory;
-import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
-import lsa.prototype.vem.engine.spi.schema.Schema;
+import lsa.prototype.vem.spi.schema.HistoryMappings;
+import lsa.prototype.vem.spi.schema.Schema;
 
 public interface VersioningEntityManagerFactory {
     VersioningEntityManager createEntityManager();

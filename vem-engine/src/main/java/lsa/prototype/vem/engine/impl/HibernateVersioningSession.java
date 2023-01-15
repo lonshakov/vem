@@ -3,12 +3,13 @@ package lsa.prototype.vem.engine.impl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import lsa.prototype.vem.engine.spi.*;
+
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeRequestState;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.Root;
 import lsa.prototype.vem.model.version.VersionedEntity;
+import lsa.prototype.vem.spi.*;
 
 import java.util.HashMap;
 import java.util.Map;

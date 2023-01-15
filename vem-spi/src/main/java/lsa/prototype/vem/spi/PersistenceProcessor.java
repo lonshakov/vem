@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.spi;
+package lsa.prototype.vem.spi;
 
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.Root;

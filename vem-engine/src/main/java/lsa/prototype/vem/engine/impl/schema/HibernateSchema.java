@@ -1,8 +1,8 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.EntityType;
-import lsa.prototype.vem.engine.spi.schema.Datatype;
-import lsa.prototype.vem.engine.spi.schema.Schema;
+import lsa.prototype.vem.spi.schema.Datatype;
+import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.model.basic.PersistedObject;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 

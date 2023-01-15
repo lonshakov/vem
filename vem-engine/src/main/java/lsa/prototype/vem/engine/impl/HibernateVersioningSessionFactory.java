@@ -2,11 +2,12 @@ package lsa.prototype.vem.engine.impl;
 
 import jakarta.persistence.EntityManagerFactory;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
-import lsa.prototype.vem.engine.spi.PersistenceProcessor;
-import lsa.prototype.vem.engine.spi.VersioningEntityManager;
-import lsa.prototype.vem.engine.spi.VersioningEntityManagerFactory;
-import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
-import lsa.prototype.vem.engine.spi.schema.Schema;
+
+import lsa.prototype.vem.spi.PersistenceProcessor;
+import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.VersioningEntityManagerFactory;
+import lsa.prototype.vem.spi.schema.HistoryMappings;
+import lsa.prototype.vem.spi.schema.Schema;
 import org.hibernate.internal.SessionFactoryImpl;
 
 import java.util.concurrent.ConcurrentHashMap;

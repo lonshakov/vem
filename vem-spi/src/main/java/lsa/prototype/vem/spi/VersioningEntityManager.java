@@ -1,8 +1,8 @@
-package lsa.prototype.vem.engine.spi;
+package lsa.prototype.vem.spi;
 
 import jakarta.persistence.EntityManager;
-import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
-import lsa.prototype.vem.engine.spi.schema.Schema;
+import lsa.prototype.vem.spi.schema.HistoryMappings;
+import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.Root;
 

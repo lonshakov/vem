@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.spi;
+package lsa.prototype.vem.spi;
 
 public class VersioningException extends RuntimeException {
     public VersioningException() {

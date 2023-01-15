@@ -2,9 +2,9 @@ package vem;
 
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
-import lsa.prototype.vem.engine.spi.VersioningEntityManager;
-import lsa.prototype.vem.engine.spi.schema.HistoryMappings;
-import lsa.prototype.vem.engine.spi.schema.Schema;
+import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.schema.HistoryMappings;
+import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.Leaf;
@@ -47,7 +47,6 @@ public class MainTest {
     void testVisibility() {
         tester.accept(
                 (vem) -> {
-
                     Store store = new Store();
                     store.setName("x5");
 
@@ -140,9 +139,9 @@ public class MainTest {
 
     @Test
     void testMetadataCreation() {
-        try (EntityManager em = database.getEntityManagerFactory().createEntityManager()) {
-            Schema schema = new HibernateSchema(em.unwrap(SessionImpl.class).getMetamodel());
-            HistoryMappings historyMappings = new HistoryMappings(schema);
-        }
+        EntityManager em = database.getEntityManagerFactory().createEntityManager();
+
+        Schema schema = new HibernateSchema(em.unwrap(SessionImpl.class).getMetamodel());
+        HistoryMappings historyMappings = new HistoryMappings(schema);
     }
 }
