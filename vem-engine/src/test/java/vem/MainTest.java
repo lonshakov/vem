@@ -62,13 +62,24 @@ public class MainTest {
 
                     vem.em().persist(store);
                 },
-                (vem) -> Assertions.assertEquals(
-                        1,
-                        vem.em().createQuery("select s from Store s where s.name = 'x5'", Store.class)
-                                .getSingleResult()
-                                .getParcels()
-                                .size()
-                )
+                (vem) -> {
+                    Store store = vem.em().createQuery("select s from Store s where s.name = 'x5'", Store.class)
+                            .getSingleResult();
+
+                    Assertions.assertEquals(
+                            1,
+                            store.getParcels()
+                                    .size()
+                    );
+
+                    Assertions.assertEquals(
+                            2,
+                            vem.em().createQuery("select p from Parcel p where p.parent = :parent", Parcel.class)
+                                    .setParameter("parent", store)
+                                    .getResultList()
+                                    .size()
+                    );
+                }
         );
     }
 
@@ -124,7 +135,9 @@ public class MainTest {
                     parcel.getItems().add(item);
 
                     ChangeRequest<Store> request = vem.persist(store);
+
                     vem.publish(request);
+
                     vem.affirm(request);
                 },
                 (vem) -> {
