@@ -19,20 +19,25 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
     private final ConcurrentHashMap<String, Parameter<T>> references = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Parameter<T>> collections = new ConcurrentHashMap<>();
     private final Parameter<T> identifier;
-    private final EntityPersister persister;
-    private final EntityTypeDescriptor<T> descriptor;
+    private final EntityPersister entityPersister;
+    private final EntityTypeDescriptor<T> entityDescriptor;
 
-    public HibernateDatatype(Class<T> type, HibernateSchema schema) {
+    public HibernateDatatype(Class<T> type, HibernateSchema schema, MetamodelImplementor metamodel) {
         this.schema = schema;
 
-        MetamodelImplementor hibernateMetamodel = schema.getHibernateMetamodel();
-        descriptor = hibernateMetamodel.entity(type);
-        persister = hibernateMetamodel.entityPersister(type);
+        entityDescriptor = metamodel.entity(type);
+        entityPersister = metamodel.entityPersister(type);
 
-        for (Attribute<? super T, ?> attribute : descriptor.getAttributes()) {
+        for (Attribute<? super T, ?> attribute : entityDescriptor.getAttributes()) {
             String name = attribute.getName();
-            Parameter<T> parameter = new HibernateParameter<>(this, attribute, persister);
-
+            if ("id".equals(name)) {
+                continue;
+            }
+            Parameter<T> parameter = new HibernateParameter<>(
+                    this,
+                    attribute,
+                    new Accessors.Parameter(entityPersister, name)
+            );
             if (!attribute.isAssociation()) {
                 primitives.put(name, parameter);
                 continue;
@@ -44,13 +49,16 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
             collections.put(name, parameter);
         }
 
-        identifier = primitives.get("id");
-
+        identifier = new HibernateParameter<>(
+                this,
+                entityDescriptor.getAttribute("id"),
+                new Accessors.Id(entityPersister)
+        );
     }
 
     @Override
     public T instantiate() {
-        return (T) persister.getEntityTuplizer().instantiate();
+        return (T) entityPersister.getEntityTuplizer().instantiate();
     }
 
     @Override
@@ -90,12 +98,11 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
 
     @Override
     public Class<T> getJavaType() {
-        return descriptor.getJavaType();
+        return entityDescriptor.getJavaType();
     }
 
     @Override
     public Schema getSchema() {
         return schema;
     }
-
 }

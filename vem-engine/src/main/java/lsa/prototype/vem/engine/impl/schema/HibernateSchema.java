@@ -11,13 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class HibernateSchema implements Schema {
     private final ConcurrentHashMap<Class<?>, Datatype<?>> datatypes = new ConcurrentHashMap<>();
-    private final MetamodelImplementor metamodel;
 
     public HibernateSchema(MetamodelImplementor metamodel) {
-        this.metamodel = metamodel;
         for (EntityType<?> entityType : metamodel.getEntities()) {
             Class<?> type = entityType.getJavaType();
-            Datatype<?> datatype = new HibernateDatatype(type, this);
+            Datatype<?> datatype = new HibernateDatatype(type, this, metamodel);
             datatypes.put(type, datatype);
         }
     }
@@ -25,10 +23,6 @@ public class HibernateSchema implements Schema {
     @Override
     public <T extends PersistedObject> Datatype<T> datatype(Class<T> type) {
         return (Datatype<T>) datatypes.get(type);
-    }
-
-    protected MetamodelImplementor getHibernateMetamodel() {
-        return metamodel;
     }
 
     @Override

@@ -1,15 +1,15 @@
 package vem;
 
-import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.Leaf;
 import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
 import org.hibernate.Session;
-import org.hibernate.internal.SessionImpl;
+import org.hibernate.internal.SessionFactoryImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vem.context.StoreChangeRequest;
@@ -19,6 +19,7 @@ import vem.entity.Parcel;
 import vem.entity.Store;
 import vem.util.TestDatabase;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -146,16 +147,37 @@ public class MainTest {
                             StoreChangeRequest.class
                     ).getSingleResult();
 
-                    Assertions.assertEquals(2, vem.getChanger().stream(request).count());
+                    Assertions.assertEquals(
+                            2,
+                            vem.getChanger()
+                                    .stream(request)
+                                    .count()
+                    );
                 }
         );
     }
 
     @Test
     void testMetadataCreation() {
-        EntityManager em = database.getEntityManagerFactory().createEntityManager();
+        Schema schema = new HibernateSchema(database.getEntityManagerFactory().unwrap(SessionFactoryImpl.class).getMetamodel());
 
-        Schema schema = new HibernateSchema(em.unwrap(SessionImpl.class).getMetamodel());
+        Datatype<Store> datatype = schema.datatype(Store.class);
+
+        Store store = new Store();
+
+        Parcel parcel = new Parcel();
+        parcel.setName("sweets");
+
+        datatype.primitive("name").set(store, "MVideo");
+        datatype.identifier().set(store, 100L);
+        ((List<Parcel>) datatype.collection("parcels").get(store)).add(parcel);
+
+        Assertions.assertEquals("MVideo", store.getName());
+        Assertions.assertEquals(100L, store.getId());
+        Assertions.assertEquals("sweets", store.getParcels().get(0).getName());
+
         HistoryMappings historyMappings = new HistoryMappings(schema);
+
+        Assertions.assertEquals(historyMappings.get(Store.class), historyMappings.get(Parcel.class));
     }
 }

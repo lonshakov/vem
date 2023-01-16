@@ -2,10 +2,8 @@ package vem.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import lsa.prototype.vem.model.version.Leaf;
 import org.hibernate.annotations.Filter;
-import vem.context.StoreChangeUnit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +14,6 @@ public class Parcel extends Leaf<Store> {
     @OneToMany(mappedBy = "parent", orphanRemoval = true)
     @Filter(name = "CurrentVersion")
     private List<Item> items = new ArrayList<>();
-    @OneToOne
-    private StoreChangeUnit changeUnit;
 
     public void setName(String name) {
         this.name = name;

@@ -2,19 +2,21 @@ package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
 import lsa.prototype.vem.model.basic.PersistedObject;
+import lsa.prototype.vem.spi.schema.Accessor;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
-import org.hibernate.persister.entity.EntityPersister;
+
+import java.io.Serializable;
 
 public class HibernateParameter<T extends PersistedObject> implements Parameter<T> {
     private final Datatype<T> structure;
     private final Attribute<? super T, ?> attribute;
-    private final EntityPersister persister;
+    private final Accessor accessor;
 
-    public HibernateParameter(Datatype<T> structure, Attribute<? super T, ?> attribute, EntityPersister persister) {
+    public HibernateParameter(Datatype<T> structure, Attribute<? super T, ?> attribute, Accessor accessor) {
         this.structure = structure;
         this.attribute = attribute;
-        this.persister = persister;
+        this.accessor = accessor;
     }
 
     @Override
@@ -50,16 +52,12 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
     }
 
     @Override
-    public void set(T owner, Object value) {
-        persister.setPropertyValue(owner, getPropertyIndex(), value);
+    public void set(T owner, Serializable value) {
+        accessor.set(owner, value);
     }
 
     @Override
     public Object get(T owner) {
-        return persister.getPropertyValue(owner, getName());
-    }
-
-    private int getPropertyIndex() {
-        return persister.getEntityMetamodel().getPropertyIndex(getName());
+        return accessor.get(owner);
     }
 }

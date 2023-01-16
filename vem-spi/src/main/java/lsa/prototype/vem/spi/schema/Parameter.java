@@ -2,6 +2,8 @@ package lsa.prototype.vem.spi.schema;
 
 import lsa.prototype.vem.model.basic.PersistedObject;
 
+import java.io.Serializable;
+
 public interface Parameter<T extends PersistedObject> {
     String getName();
 
@@ -19,7 +21,7 @@ public interface Parameter<T extends PersistedObject> {
         return !isReference() && !isCollection();
     }
 
-    void set(T owner, Object value);
+    void set(T owner, Serializable value);
 
     Object get(T owner);
 }
