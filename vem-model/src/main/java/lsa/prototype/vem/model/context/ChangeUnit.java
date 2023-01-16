@@ -5,7 +5,7 @@ import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.model.version.Leaf;
 
 @MappedSuperclass
-abstract public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
+public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
     @AttributeOverrides({
             @AttributeOverride(name = "type", column = @Column(name = "leaf_type")),
             @AttributeOverride(name = "id", column = @Column(name = "leaf_id"))
