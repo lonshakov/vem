@@ -57,7 +57,7 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
     }
 
     @Override
-    public Object get(T owner) {
+    public Serializable get(T owner) {
         return accessor.get(owner);
     }
 }

@@ -23,5 +23,5 @@ public interface Parameter<T extends PersistedObject> {
 
     void set(T owner, Serializable value);
 
-    Object get(T owner);
+    Serializable get(T owner);
 }
