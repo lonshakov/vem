@@ -36,7 +36,8 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
             Parameter<T> parameter = new HibernateParameter<>(
                     this,
                     attribute,
-                    new Accessors.Parameter(entityPersister, name)
+                    new Accessors.Parameter(entityPersister, name),
+                    entityPersister.getPropertyType(name)
             );
             if (!attribute.isAssociation()) {
                 primitives.put(name, parameter);
@@ -52,7 +53,8 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
         identifier = new HibernateParameter<>(
                 this,
                 entityDescriptor.getAttribute("id"),
-                new Accessors.Id(entityPersister)
+                new Accessors.Id(entityPersister),
+                entityPersister.getPropertyType("id")
         );
     }
 

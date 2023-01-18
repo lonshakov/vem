@@ -5,6 +5,7 @@ import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.spi.schema.Accessor;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
+import org.hibernate.type.Type;
 
 import java.io.Serializable;
 
@@ -12,11 +13,13 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
     private final Datatype<T> structure;
     private final Attribute<? super T, ?> attribute;
     private final Accessor accessor;
+    private final Type hibernateType;
 
-    public HibernateParameter(Datatype<T> structure, Attribute<? super T, ?> attribute, Accessor accessor) {
+    public HibernateParameter(Datatype<T> structure, Attribute<? super T, ?> attribute, Accessor accessor, Type hibernateType) {
         this.structure = structure;
         this.attribute = attribute;
         this.accessor = accessor;
+        this.hibernateType = hibernateType;
     }
 
     @Override
@@ -26,7 +29,7 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
 
     @Override
     public Class<?> getType() {
-        return attribute.getJavaType();
+        return hibernateType.getReturnedClass();
     }
 
     @Override
