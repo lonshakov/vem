@@ -4,6 +4,7 @@ package lsa.prototype.vem.engine.impl;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.context.PolymorphEntity;
+import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.Leaf;
 import lsa.prototype.vem.model.version.Root;
 import lsa.prototype.vem.model.version.VersionedEntity;
@@ -11,6 +12,8 @@ import lsa.prototype.vem.spi.PersistenceProcessor;
 import lsa.prototype.vem.spi.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
+
+import java.util.UUID;
 
 public class Persister implements PersistenceProcessor {
     @Override
@@ -20,7 +23,14 @@ public class Persister implements PersistenceProcessor {
 
         for (Parameter<V> parameter : datatype.collections().values()) {
             for (Leaf<VersionedEntity> leaf : (Iterable<Leaf<VersionedEntity>>) parameter.get(newEntity)) {
-                leaf.setParent(oldEntity);
+                UUID affinity = oldEntity.getUuid();
+                VersionedEntity parent = EntityVersion.StateType.ACTIVE.equals(leaf.getVersion().getStateType())
+                        ? oldEntity
+                        : null;
+
+                leaf.setParent(parent);
+                leaf.setAffinity(affinity);
+
                 bind(request, leaf, vem);
                 process(leaf, leaf, request, vem);
             }

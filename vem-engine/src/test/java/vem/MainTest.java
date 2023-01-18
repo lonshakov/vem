@@ -53,15 +53,13 @@ public class MainTest {
 
                     Parcel parcel1 = new Parcel();
                     parcel1.getVersion().setStateType(EntityVersion.StateType.ACTIVE);
-                    parcel1.setParent(store);
-                    vem.em().persist(parcel1);
+                    store.getParcels().add(parcel1);
 
                     Parcel parcel2 = new Parcel();
                     parcel2.getVersion().setStateType(EntityVersion.StateType.PASSIVE);
-                    parcel2.setParent(store);
-                    vem.em().persist(parcel2);
+                    store.getParcels().add(parcel2);
 
-                    vem.em().persist(store);
+                    vem.persist(store);
                 },
                 (vem) -> {
                     Store store = vem.em().createQuery("select s from Store s where s.name = 'x5'", Store.class)
@@ -75,8 +73,8 @@ public class MainTest {
 
                     Assertions.assertEquals(
                             2,
-                            vem.em().createQuery("select p from Parcel p where p.parent = :parent", Parcel.class)
-                                    .setParameter("parent", store)
+                            vem.em().createQuery("select p from Parcel p where p.affinity = :affinity", Parcel.class)
+                                    .setParameter("affinity", store.getUuid())
                                     .getResultList()
                                     .size()
                     );

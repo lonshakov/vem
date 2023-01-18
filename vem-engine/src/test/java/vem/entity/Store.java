@@ -2,17 +2,17 @@ package vem.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lsa.prototype.vem.model.version.Root;
-import org.hibernate.annotations.Filter;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 public class Store extends Root {
     private String name;
-    @OneToMany(mappedBy = "parent", orphanRemoval = true)
-    @Filter(name = "CurrentVersion")
+    @OneToOne(mappedBy = "parent")
+    private StoreBody body;
+    @OneToMany(mappedBy = "parent")
     private List<Parcel> parcels = new ArrayList<>();
 
     public String getName() {
@@ -21,6 +21,10 @@ public class Store extends Root {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public StoreBody getBody() {
+        return body;
     }
 
     public List<Parcel> getParcels() {
