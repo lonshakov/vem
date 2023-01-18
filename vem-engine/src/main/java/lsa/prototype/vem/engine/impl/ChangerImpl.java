@@ -4,8 +4,8 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.Leaf;
-import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.model.version.LeafEntity;
+import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.spi.Changer;
 import lsa.prototype.vem.spi.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.HistoryMapping;
@@ -25,31 +25,31 @@ public class ChangerImpl implements Changer {
         jpaCriteriaBuilder = vem.getFactory().getJpaFactory().getCriteriaBuilder();
     }
 
-    public <T extends Root> ChangeRequest<T> instantiate(T entity) {
+    public <T extends RootEntity> ChangeRequest<T> instantiate(T entity) {
         ChangeRequest<T> request = (ChangeRequest<T>) vem.getFactory().getHistoryMapping().get(entity).getRequestDatatype().instantiate();
         request.setRoot(entity);
         return request;
     }
 
     @Override
-    public <T extends Root> Stream<Leaf<?>> stream(ChangeRequest<T> request) {
+    public <T extends RootEntity> Stream<LeafEntity<?>> stream(ChangeRequest<T> request) {
         return getUnits(request).stream()
                 .map(ChangeUnit::getLeaf)
-                .map(o -> (Leaf<?>) vem.em().getReference(o.getType(), o.getId()));
+                .map(o -> (LeafEntity<?>) vem.em().getReference(o.getType(), o.getId()));
     }
 
     @Override
-    public <T extends Root>
-    Map<Class<?>, List<Leaf<?>>> map(ChangeRequest<T> request) {
+    public <T extends RootEntity>
+    Map<Class<?>, List<LeafEntity<?>>> map(ChangeRequest<T> request) {
         return mapTypedUnits(request).entrySet().stream().map(bucket -> {
-            Class<Leaf<?>> leafType = (Class<Leaf<?>>) bucket.getKey();
+            Class<LeafEntity<?>> leafType = (Class<LeafEntity<?>>) bucket.getKey();
             Set<Long> identifiers = bucket.getValue().stream().map(u -> u.getLeaf().getId()).collect(Collectors.toSet());
 
-            CriteriaQuery<Leaf<?>> query = cb().createQuery(leafType);
-            jakarta.persistence.criteria.Root<Leaf<?>> root = query.from(leafType);
+            CriteriaQuery<LeafEntity<?>> query = cb().createQuery(leafType);
+            jakarta.persistence.criteria.Root<LeafEntity<?>> root = query.from(leafType);
 
             query.select(root).where(root.get("id").in(identifiers));
-            List<Leaf<?>> results = vem.em().createQuery(query).getResultList();
+            List<LeafEntity<?>> results = vem.em().createQuery(query).getResultList();
 
             return Map.entry(bucket.getKey(), results);
         }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -59,21 +59,21 @@ public class ChangerImpl implements Changer {
         return jpaCriteriaBuilder;
     }
 
-    private <T extends Root>
+    private <T extends RootEntity>
     Map<Class<?>, List<ChangeUnit<ChangeRequest<T>>>> mapTypedUnits(ChangeRequest<T> request) {
         return getUnits(request)
                 .stream()
                 .collect(Collectors.groupingBy(o -> o.getLeaf().getType()));
     }
 
-    private <T extends Root>
+    private <T extends RootEntity>
     List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request) {
         return vem.em()
                 .createQuery(getUnitQuery(request))
                 .getResultList();
     }
 
-    public <T extends Root>
+    public <T extends RootEntity>
     CriteriaQuery<ChangeUnit<ChangeRequest<T>>> getUnitQuery(ChangeRequest<T> request) {
         HistoryMapping<T> historyMapping = (HistoryMapping<T>) vem.getHistoryMappings().get(request.getRoot());
 

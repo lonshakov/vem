@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @MappedSuperclass
 //@Index(name = "affinity_idx", columnList = "affinity")
-public class Leaf<P extends VersionedEntity> extends VersionedEntity {
+public class LeafEntity<P extends VersionedEntity> extends VersionedEntity {
     @ManyToOne
     private P parent;
     @Column(columnDefinition = "uuid")

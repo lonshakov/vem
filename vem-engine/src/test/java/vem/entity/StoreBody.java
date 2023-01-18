@@ -1,10 +1,10 @@
 package vem.entity;
 
 import jakarta.persistence.Entity;
-import lsa.prototype.vem.model.version.Leaf;
+import lsa.prototype.vem.model.version.LeafEntity;
 
 @Entity
-public class StoreBody extends Leaf<Store> {
+public class StoreBody extends LeafEntity<Store> {
     private String address;
 
     public String getAddress() {

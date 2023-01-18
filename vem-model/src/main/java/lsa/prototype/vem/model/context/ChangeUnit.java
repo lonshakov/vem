@@ -2,7 +2,7 @@ package lsa.prototype.vem.model.context;
 
 import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.PersistedObject;
-import lsa.prototype.vem.model.version.Leaf;
+import lsa.prototype.vem.model.version.LeafEntity;
 
 @MappedSuperclass
 public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
@@ -24,7 +24,7 @@ public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
         this.leaf = leaf;
     }
 
-    public void setLeaf(Leaf<?> leaf) {
+    public void setLeaf(LeafEntity<?> leaf) {
         this.leaf = new PolymorphEntity(leaf);
     }
 

@@ -1,7 +1,7 @@
 package lsa.prototype.vem.spi.schema;
 
 import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.model.version.VersionedEntity;
 
 import java.util.Map;
@@ -17,7 +17,7 @@ public class HistoryMappings {
                 .filter(o -> ChangeUnit.class.isAssignableFrom(o.getJavaType()))
                 .map(unit -> {
                     Datatype<?> request = unit.reference("request").getParameterDatatype();
-                    Datatype<? extends Root> root = (Datatype<? extends Root>) request.reference("root").getParameterDatatype();
+                    Datatype<? extends RootEntity> root = (Datatype<? extends RootEntity>) request.reference("root").getParameterDatatype();
                     return new HistoryMapping<>(root, request, unit);
                 })
                 .collect(Collectors.toMap(e -> e.getRootDatatype().getJavaType(), e -> e));
@@ -40,7 +40,7 @@ public class HistoryMappings {
     }
 
     private Class<?> getRoot(Class key, Schema schema) {
-        if (Root.class.isAssignableFrom(key)) {
+        if (RootEntity.class.isAssignableFrom(key)) {
             return key;
         }
 

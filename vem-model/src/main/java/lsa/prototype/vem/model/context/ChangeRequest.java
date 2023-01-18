@@ -2,10 +2,10 @@ package lsa.prototype.vem.model.context;
 
 import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.Particle;
-import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.model.version.RootEntity;
 
 @MappedSuperclass
-public class ChangeRequest<T extends Root> extends Particle {
+public class ChangeRequest<T extends RootEntity> extends Particle {
     private ChangeState state = new ChangeState(ChangeState.StateType.DRAFT, System.currentTimeMillis());
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;

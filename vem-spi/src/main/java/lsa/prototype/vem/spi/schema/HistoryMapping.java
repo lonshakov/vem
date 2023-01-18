@@ -2,9 +2,9 @@ package lsa.prototype.vem.spi.schema;
 
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.Root;
+import lsa.prototype.vem.model.version.RootEntity;
 
-public class HistoryMapping<T extends Root> {
+public class HistoryMapping<T extends RootEntity> {
     private final Datatype<T> root;
     private final Datatype<?> request;
     private final Datatype<?> unit;
