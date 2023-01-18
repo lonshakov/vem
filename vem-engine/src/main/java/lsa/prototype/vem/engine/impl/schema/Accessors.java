@@ -15,33 +15,33 @@ public class Accessors {
         }
 
         @Override
-        public void set(PersistedObject entity, Serializable value) {
-            persister.getEntityTuplizer().setIdentifier(entity, value);
+        public void set(PersistedObject entity, Object value) {
+            persister.getEntityTuplizer().setIdentifier(entity, (Serializable) value);
         }
 
         @Override
-        public Serializable get(PersistedObject entity) {
+        public Object get(PersistedObject entity) {
             return persister.getEntityTuplizer().getIdentifier(entity);
         }
     }
 
-    public static class Parameter implements Accessor {
+    public static class Primitive implements Accessor {
         private final EntityPersister persister;
         private final int index;
 
-        public Parameter(EntityPersister persister, String name) {
+        public Primitive(EntityPersister persister, String name) {
             this.persister = persister;
             index = persister.getEntityMetamodel().getPropertyIndex(name);
         }
 
         @Override
-        public void set(PersistedObject entity, Serializable value) {
+        public void set(PersistedObject entity, Object value) {
             persister.setPropertyValue(entity, index, value);
         }
 
         @Override
-        public Serializable get(PersistedObject entity) {
-            return (Serializable) persister.getPropertyValue(entity, index);
+        public Object get(PersistedObject entity) {
+            return persister.getPropertyValue(entity, index);
         }
     }
 }

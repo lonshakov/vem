@@ -17,6 +17,7 @@ import vem.context.StoreChangeUnit;
 import vem.entity.Item;
 import vem.entity.Parcel;
 import vem.entity.Store;
+import vem.entity.StoreBody;
 import vem.util.TestDatabase;
 
 import java.util.List;
@@ -42,6 +43,7 @@ public class MainTest {
     void testPersist() {
         isolator.accept((vem) -> {
             Store store = new Store("Macy's");
+            store.setBody(new StoreBody("Moscow"));
 
             Parcel parcel = new Parcel("Present");
             store.getParcels().add(parcel);
@@ -58,7 +60,7 @@ public class MainTest {
                     .createQuery("select c from StoreChangeRequest c where c.root.name = 'Macy''s'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            Assertions.assertEquals(2, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(3, vem.getChanger().stream(request).count());
 
             Store store = vem.em()
                     .createQuery("select s from Store s where s.name = 'Macy''s'", Store.class)
@@ -67,6 +69,8 @@ public class MainTest {
             Assertions.assertEquals(1, store.getParcels().size());
 
             Assertions.assertEquals(1, store.getParcels().get(0).getItems().size());
+
+            Assertions.assertNotNull(store.getBody());
         });
     }
 
@@ -79,6 +83,7 @@ public class MainTest {
         //persist (initial)
         isolator.accept((vem) -> {
             Store store = new Store("x5");
+            store.setBody(new StoreBody("Bali"));
 
             Parcel parcel = new Parcel("box1");
             parcel.getItems().add(new Item("item1"));
@@ -89,7 +94,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(2, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(3, vem.getChanger().stream(request).count());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -186,6 +191,23 @@ public class MainTest {
                     .getResultList();
 
             Assertions.assertEquals(2, items.size());
+        });
+        //merge (update body)
+        isolator.accept((vem) -> {
+            Store store = selectX5.apply(vem);
+            StoreBody body = store.getBody();
+            body.setAddress("Phuket");
+            body.getVersion().setStateType(EntityVersion.StateType.DRAFT);
+
+            ChangeRequest<Store> request = vem.merge(store);
+            vem.publish(request);
+            vem.affirm(request);
+
+            Assertions.assertEquals(1, vem.getChanger().stream(request).count());
+        });
+        isolator.accept((vem) -> {
+            Store store = selectX5.apply(vem);
+            System.out.println();
         });
     }
 

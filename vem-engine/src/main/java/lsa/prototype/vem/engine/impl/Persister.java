@@ -18,6 +18,7 @@ import java.util.UUID;
 
 public class Persister implements PersistenceProcessor {
     private final static Set<EntityVersion.StateType> CHANGE_STATES = Set.of(EntityVersion.StateType.DRAFT, EntityVersion.StateType.PURGE);
+
     @Override
     public <T extends RootEntity, R extends ChangeRequest<T>, V extends VersionedEntity>
     void process(V oldEntity, V newEntity, R request, VersioningEntityManager vem) {
@@ -35,9 +36,9 @@ public class Persister implements PersistenceProcessor {
                 */
                 leaf.setAffinity(affinity);
 
-                if (CHANGE_STATES.contains(leaf.getVersion().getStateType())) {
-                    bind(request, leaf, vem);
-                }
+
+                bind(request, leaf, vem);
+
                 process(leaf, leaf, request, vem);
             }
         }
@@ -50,16 +51,18 @@ public class Persister implements PersistenceProcessor {
             if (leaf == null) {
                 continue;
             }
-            leaf.setParent(oldEntity);
+            leaf.setAffinity(affinity);
             bind(request, leaf, vem);
         }
     }
 
     private <T extends RootEntity, R extends ChangeRequest<T>> void bind(R request, LeafEntity<?> leaf, VersioningEntityManager vem) {
-        ChangeUnit<R> unit = (ChangeUnit<R>) vem.getFactory().getHistoryMapping().get(leaf).getUnitDatatype().instantiate();
-        unit.setRequest(request);
-        vem.em().persist(leaf);
-        unit.setLeaf(new PolymorphEntity(leaf));
-        vem.em().persist(unit);
+        if (CHANGE_STATES.contains(leaf.getVersion().getStateType())) {
+            ChangeUnit<R> unit = (ChangeUnit<R>) vem.getFactory().getHistoryMapping().get(leaf).getUnitDatatype().instantiate();
+            unit.setRequest(request);
+            vem.em().persist(leaf);
+            unit.setLeaf(new PolymorphEntity(leaf));
+            vem.em().persist(unit);
+        }
     }
 }

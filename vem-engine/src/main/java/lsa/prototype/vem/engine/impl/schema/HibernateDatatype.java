@@ -36,7 +36,7 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
             Parameter<T> parameter = new HibernateParameter<>(
                     this,
                     attribute,
-                    new Accessors.Parameter(entityPersister, name),
+                    new Accessors.Primitive(entityPersister, name),
                     entityPersister.getPropertyType(name)
             );
             if (!attribute.isAssociation()) {
@@ -106,5 +106,23 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
     @Override
     public Schema getSchema() {
         return schema;
+    }
+
+    @Override
+    public String toString() {
+        return entityDescriptor.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HibernateDatatype<?> that = (HibernateDatatype<?>) o;
+        return entityDescriptor.equals(that.entityDescriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        return entityDescriptor.hashCode();
     }
 }

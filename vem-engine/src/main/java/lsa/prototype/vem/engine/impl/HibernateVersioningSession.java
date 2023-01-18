@@ -110,7 +110,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
                 }
             }
             case PASSIVE -> {
-                if (entity instanceof LeafEntity<?>){
+                if (entity instanceof LeafEntity<?>) {
                     LeafEntity<VersionedEntity> nonOrphan = (LeafEntity<VersionedEntity>) entity;
                     nonOrphan.setParent(null);
                 }

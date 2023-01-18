@@ -7,6 +7,13 @@ import lsa.prototype.vem.model.version.LeafEntity;
 public class StoreBody extends LeafEntity<Store> {
     private String address;
 
+    public StoreBody(String address) {
+        this.address = address;
+    }
+
+    public StoreBody() {
+    }
+
     public String getAddress() {
         return address;
     }

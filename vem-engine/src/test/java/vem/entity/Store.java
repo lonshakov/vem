@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import lsa.prototype.vem.model.version.RootEntity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,5 +37,9 @@ public class Store extends RootEntity {
 
     public List<Parcel> getParcels() {
         return parcels;
+    }
+
+    public void setBody(StoreBody body) {
+        this.body = body;
     }
 }

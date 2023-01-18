@@ -7,8 +7,6 @@ import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import org.hibernate.type.Type;
 
-import java.io.Serializable;
-
 public class HibernateParameter<T extends PersistedObject> implements Parameter<T> {
     private final Datatype<T> structure;
     private final Attribute<? super T, ?> attribute;
@@ -55,12 +53,30 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
     }
 
     @Override
-    public void set(T owner, Serializable value) {
+    public void set(T owner, Object value) {
         accessor.set(owner, value);
     }
 
     @Override
-    public Serializable get(T owner) {
+    public Object get(T owner) {
         return accessor.get(owner);
+    }
+
+    @Override
+    public String toString() {
+        return attribute.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HibernateParameter<?> that = (HibernateParameter<?>) o;
+        return hibernateType.equals(that.hibernateType);
+    }
+
+    @Override
+    public int hashCode() {
+        return hibernateType.hashCode();
     }
 }

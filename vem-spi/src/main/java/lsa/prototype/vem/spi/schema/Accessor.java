@@ -2,10 +2,8 @@ package lsa.prototype.vem.spi.schema;
 
 import lsa.prototype.vem.model.basic.PersistedObject;
 
-import java.io.Serializable;
-
 public interface Accessor {
-    void set(PersistedObject entity, Serializable value);
+    void set(PersistedObject entity, Object value);
 
-    Serializable get(PersistedObject entity);
+    Object get(PersistedObject entity);
 }
