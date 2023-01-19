@@ -5,7 +5,7 @@ import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.LeafEntity;
-import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;

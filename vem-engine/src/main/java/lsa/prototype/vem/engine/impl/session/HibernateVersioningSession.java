@@ -1,22 +1,31 @@
-package lsa.prototype.vem.engine.impl;
+package lsa.prototype.vem.engine.impl.session;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import lsa.prototype.vem.engine.impl.request.ChangerImpl;
+import lsa.prototype.vem.model.context.ChangeOperation;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeState;
+import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.model.version.VersionedEntity;
-import lsa.prototype.vem.spi.*;
+import lsa.prototype.vem.spi.VersioningException;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
+import lsa.prototype.vem.spi.session.PersistenceProcessor;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
+import lsa.prototype.vem.spi.session.VersioningEntityManagerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class HibernateVersioningSession implements VersioningEntityManager {
     private final VersioningEntityManagerFactory factory;
@@ -35,30 +44,46 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     public <T extends RootEntity> ChangeRequest<T> persist(T entity) {
         if (entity == null)
             return null;
-
         ChangeRequest<T> request = getChanger().instantiate(entity);
 
         em.persist(request);
         em.persist(entity);
 
-        processors.get("recursive-persist").process(entity, entity, request, this);
+        processors.get("entity-persist").process(entity, entity, request, this);
 
         return request;
+    }
+
+    @Override
+    public <T extends RootEntity> ChangeRequest<T> persist(ChangeRequestSpecification<T> specification) {
+        if (specification == null || specification.getRoot() == null)
+            return null;
+        T entity = specification.getRoot();
+        em.persist(entity);
+
+        return persistCRS(specification, entity);
     }
 
     @Override
     public <T extends RootEntity> ChangeRequest<T> merge(T entity) {
         if (entity == null || entity.getId() == 0)
             return null;
-
-        T storedEntity = em.find((Class<T>) entity.getClass(), entity.getId());
+        T storedEntity = find((Class<T>) entity.getClass(), entity.getUuid());
         ChangeRequest<T> request = getChanger().instantiate(storedEntity);
 
         em.persist(request);
 
-        processors.get("recursive-merge").process(storedEntity, entity, request, this);
-
+        processors.get("entity-merge").process(request.getRoot(), entity, request, this);
         return request;
+    }
+
+    @Override
+    public <T extends RootEntity> ChangeRequest<T> merge(ChangeRequestSpecification<T> specification) {
+        T entity = specification.getRoot();
+        if (entity == null || entity.getId() == 0)
+            return null;
+        T storedEntity = find((Class<T>) entity.getClass(), entity.getUuid());
+        return persistCRS(specification, storedEntity);
     }
 
     @Override
@@ -96,6 +121,76 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         request.setState(ChangeState.StateType.AFFIRMED, versionDate);
         em.persist(request);
+    }
+
+    @Override
+    public <T extends RootEntity> void reject(ChangeRequest<T> request) {
+        checkState(request, "reject", ChangeState.StateType.PUBLISHED);
+        //todo
+    }
+
+    @Override
+    public <T extends VersionedEntity> T find(Class<T> type, UUID uuid) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<T> query = cb.createQuery(type);
+        Root<T> root = query.from(type);
+        query.select(root).where(cb.equal(root.get("uuid"), uuid));
+        List<T> result = em.createQuery(query).getResultList();
+
+        return switch (result.size()) {
+            case 0 -> null;
+            case 1 -> result.get(0);
+            default -> throw new VersioningException("too many rows " + type.getName() + "(" + uuid + ")");
+        };
+    }
+
+    @Override
+    public EntityManager em() {
+        return em;
+    }
+
+    @Override
+    public VersioningEntityManagerFactory getFactory() {
+        return factory;
+    }
+
+    @Override
+    public void close() {
+        em.close();
+    }
+
+    @Override
+    public Changer getChanger() {
+        return changer;
+    }
+
+    private static <T extends RootEntity> void checkState(ChangeRequest<T> request, String methodName, ChangeState.StateType stateType) {
+        if (!stateType.equals(request.getState().getStateType()))
+            throw new VersioningException("Ошибка при попытке обработать методом " + methodName + " заявку на изменение в статусе " + request.getState());
+    }
+
+    private <T extends RootEntity> ChangeRequest<T> persistCRS(ChangeRequestSpecification<T> specification, T entity) {
+        ChangeRequest<T> request = getChanger().instantiate(entity);
+        em.persist(request);
+
+        Datatype<?> unitDatatype = getFactory().getHistoryMapping().get(entity).getUnitDatatype();
+        specification.getUnits().forEach(u -> {
+            ChangeUnit<ChangeRequest<T>> unit = (ChangeUnit<ChangeRequest<T>>) unitDatatype.instantiate();
+            LeafEntity<?> leaf = u.getLeaf();
+            ChangeOperation operation = u.getOperation();
+
+            if (operation.equals(ChangeOperation.REMOVE)) {
+                leaf.getVersion().setStateType(EntityVersion.StateType.PURGE);
+            }
+
+            em.persist(leaf);
+            em.persist(unit);
+
+            unit.setOperation(operation);
+            unit.setLeaf(leaf);
+            unit.setRequest(request);
+        });
+        return request;
     }
 
     private void processAffinityWiring(long versionDate, VersionedEntity entity) {
@@ -165,36 +260,5 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         );
 
         return query;
-    }
-
-    @Override
-    public <T extends RootEntity> void reject(ChangeRequest<T> request) {
-        checkState(request, "reject", ChangeState.StateType.PUBLISHED);
-        //todo
-    }
-
-    @Override
-    public EntityManager em() {
-        return em;
-    }
-
-    @Override
-    public VersioningEntityManagerFactory getFactory() {
-        return factory;
-    }
-
-    @Override
-    public void close() {
-        em.close();
-    }
-
-    @Override
-    public Changer getChanger() {
-        return changer;
-    }
-
-    private static <T extends RootEntity> void checkState(ChangeRequest<T> request, String methodName, ChangeState.StateType stateType) {
-        if (!stateType.equals(request.getState().getStateType()))
-            throw new VersioningException("Ошибка при попытке обработать методом " + methodName + " заявку на изменение в статусе " + request.getState());
     }
 }

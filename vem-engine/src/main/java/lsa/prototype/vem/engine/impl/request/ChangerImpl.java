@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.impl;
+package lsa.prototype.vem.engine.impl.request;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -6,8 +6,8 @@ import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
-import lsa.prototype.vem.spi.Changer;
-import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.request.Changer;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.HistoryMapping;
 
 import java.util.List;

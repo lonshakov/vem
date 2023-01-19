@@ -1,4 +1,4 @@
-package lsa.prototype.vem.spi;
+package lsa.prototype.vem.spi.request;
 
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.LeafEntity;

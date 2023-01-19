@@ -1,6 +1,7 @@
-package lsa.prototype.vem.engine.impl;
+package lsa.prototype.vem.engine.impl.session;
 
 
+import lsa.prototype.vem.model.context.ChangeOperation;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.context.PolymorphEntity;
@@ -8,8 +9,8 @@ import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.model.version.VersionedEntity;
-import lsa.prototype.vem.spi.PersistenceProcessor;
-import lsa.prototype.vem.spi.VersioningEntityManager;
+import lsa.prototype.vem.spi.session.PersistenceProcessor;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 
@@ -27,18 +28,8 @@ public class Persister implements PersistenceProcessor {
 
         for (Parameter<V> parameter : datatype.collections().values()) {
             for (LeafEntity<VersionedEntity> leaf : (Iterable<LeafEntity<VersionedEntity>>) parameter.get(newEntity)) {
-                /*
-                VersionedEntity parent = EntityVersion.StateType.ACTIVE.equals(leaf.getVersion().getStateType())
-                        ? oldEntity
-                        : null;
-
-                leaf.setParent(parent);
-                */
                 leaf.setAffinity(affinity);
-
-
                 bind(request, leaf, vem);
-
                 process(leaf, leaf, request, vem);
             }
         }
@@ -59,10 +50,25 @@ public class Persister implements PersistenceProcessor {
     private <T extends RootEntity, R extends ChangeRequest<T>> void bind(R request, LeafEntity<?> leaf, VersioningEntityManager vem) {
         if (CHANGE_STATES.contains(leaf.getVersion().getStateType())) {
             ChangeUnit<R> unit = (ChangeUnit<R>) vem.getFactory().getHistoryMapping().get(leaf).getUnitDatatype().instantiate();
+            ChangeOperation operation = getOperation(leaf);
+
+            unit.setOperation(operation);
             unit.setRequest(request);
+
             vem.em().persist(leaf);
             unit.setLeaf(new PolymorphEntity(leaf));
+
             vem.em().persist(unit);
         }
+    }
+
+    private ChangeOperation getOperation(LeafEntity<?> leaf) {
+        return switch (leaf.getVersion().getStateType()) {
+            case DRAFT -> (leaf.getId() == 0)
+                    ? ChangeOperation.ADD
+                    : ChangeOperation.REPLACE;
+            case PURGE -> ChangeOperation.REMOVE;
+            default -> null;
+        };
     }
 }

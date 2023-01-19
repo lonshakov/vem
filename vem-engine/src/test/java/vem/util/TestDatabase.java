@@ -2,8 +2,8 @@ package vem.util;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
-import lsa.prototype.vem.engine.impl.HibernateVersioningSessionFactory;
-import lsa.prototype.vem.spi.VersioningEntityManagerFactory;
+import lsa.prototype.vem.engine.impl.session.HibernateVersioningSessionFactory;
+import lsa.prototype.vem.spi.session.VersioningEntityManagerFactory;
 import org.hibernate.internal.SessionFactoryImpl;
 
 public class TestDatabase {

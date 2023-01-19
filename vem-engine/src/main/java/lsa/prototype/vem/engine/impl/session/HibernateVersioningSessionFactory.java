@@ -1,10 +1,10 @@
-package lsa.prototype.vem.engine.impl;
+package lsa.prototype.vem.engine.impl.session;
 
 import jakarta.persistence.EntityManagerFactory;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
-import lsa.prototype.vem.spi.PersistenceProcessor;
-import lsa.prototype.vem.spi.VersioningEntityManager;
-import lsa.prototype.vem.spi.VersioningEntityManagerFactory;
+import lsa.prototype.vem.spi.session.PersistenceProcessor;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
+import lsa.prototype.vem.spi.session.VersioningEntityManagerFactory;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
 import org.hibernate.internal.SessionFactoryImpl;
@@ -23,8 +23,8 @@ public class HibernateVersioningSessionFactory implements VersioningEntityManage
         historyMappings = new HistoryMappings(schema);
 
         //default values
-        processors.put("recursive-persist", new Persister());
-        processors.put("recursive-merge", new Persister());
+        processors.put("entity-persist", new Persister());
+        processors.put("entity-merge", new Persister());
     }
 
     @Override

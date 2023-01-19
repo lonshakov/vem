@@ -1,15 +1,27 @@
-package lsa.prototype.vem.spi;
+package lsa.prototype.vem.spi.session;
 
 import jakarta.persistence.EntityManager;
+import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.context.ChangeRequest;
+import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
+import lsa.prototype.vem.model.version.VersionedEntity;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
+
+import java.util.List;
+import java.util.UUID;
 
 public interface VersioningEntityManager extends AutoCloseable {
     <T extends RootEntity> ChangeRequest<T> persist(T entity);
 
+    <T extends RootEntity> ChangeRequest<T> persist(ChangeRequestSpecification<T> specification);
+
     <T extends RootEntity> ChangeRequest<T> merge(T entity);
+
+    <T extends RootEntity> ChangeRequest<T> merge(ChangeRequestSpecification<T> specification);
 
     <T extends RootEntity> ChangeRequest<T> remove(T entity);
 
@@ -18,6 +30,8 @@ public interface VersioningEntityManager extends AutoCloseable {
     <T extends RootEntity> void affirm(ChangeRequest<T> request);
 
     <T extends RootEntity> void reject(ChangeRequest<T> request);
+
+    <T extends VersionedEntity> T find(Class<T> type, UUID uuid);
 
     EntityManager em();
 

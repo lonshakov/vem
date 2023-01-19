@@ -1,4 +1,4 @@
-package lsa.prototype.vem.spi;
+package lsa.prototype.vem.spi.session;
 
 import jakarta.persistence.EntityManagerFactory;
 import lsa.prototype.vem.spi.schema.HistoryMappings;

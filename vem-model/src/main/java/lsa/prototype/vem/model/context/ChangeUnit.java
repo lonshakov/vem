@@ -15,6 +15,7 @@ public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
     @ManyToOne
     private R request;
     private long date;
+    private ChangeOperation operation;
 
     public PolymorphEntity getLeaf() {
         return leaf;
@@ -42,5 +43,13 @@ public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
 
     public void setRequest(R request) {
         this.request = request;
+    }
+
+    public ChangeOperation getOperation() {
+        return operation;
+    }
+
+    public void setOperation(ChangeOperation operation) {
+        this.operation = operation;
     }
 }
