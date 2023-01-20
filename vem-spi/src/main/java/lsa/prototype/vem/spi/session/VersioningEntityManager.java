@@ -4,7 +4,6 @@ import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.RootEntity;
-import lsa.prototype.vem.model.version.VersionedEntity;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.HistoryMappings;

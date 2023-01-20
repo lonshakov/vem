@@ -11,11 +11,13 @@ import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.Datatype;
-import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.HistoryMapping;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 

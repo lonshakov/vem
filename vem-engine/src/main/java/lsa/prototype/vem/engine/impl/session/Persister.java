@@ -4,15 +4,14 @@ package lsa.prototype.vem.engine.impl.session;
 import lsa.prototype.vem.model.context.ChangeOperation;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.context.PolymorphEntity;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.model.version.VersionedEntity;
-import lsa.prototype.vem.spi.session.PersistenceProcessor;
-import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
+import lsa.prototype.vem.spi.session.PersistenceProcessor;
+import lsa.prototype.vem.spi.session.VersioningEntityManager;
 
 import java.util.Set;
 import java.util.UUID;

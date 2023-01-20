@@ -20,6 +20,7 @@ public class BatchIterator implements Iterator<LeafEntity<?>> {
     private final Iterator<Map.Entry<Class<?>, List<ChangeUnit<?>>>> batchIterator;
     private Iterator<? extends LeafEntity<?>> objectIterator = Collections.emptyIterator();
     private final EntityManager em;
+
     public <T extends RootEntity> BatchIterator(ChangeRequest<T> request, Changer changer, EntityManager em) {
         Map<Class<?>, List<ChangeUnit<?>>> source = changer.getUnits(request)
                 .stream()
@@ -41,7 +42,7 @@ public class BatchIterator implements Iterator<LeafEntity<?>> {
 
     private void refresh() {
         if (!objectIterator.hasNext() && batchIterator.hasNext()) {
-            Map.Entry<Class<?>,List<ChangeUnit<?>>> batch = batchIterator.next();
+            Map.Entry<Class<?>, List<ChangeUnit<?>>> batch = batchIterator.next();
 
             Class<LeafEntity<?>> type = (Class<LeafEntity<?>>) batch.getKey();
             List<Long> identifiers = batch.getValue()
