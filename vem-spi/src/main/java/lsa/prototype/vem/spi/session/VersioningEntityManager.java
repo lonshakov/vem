@@ -3,7 +3,6 @@ package lsa.prototype.vem.spi.session;
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.context.ChangeRequest;
-import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.model.version.VersionedEntity;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
@@ -11,7 +10,6 @@ import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface VersioningEntityManager extends AutoCloseable {
@@ -31,7 +29,11 @@ public interface VersioningEntityManager extends AutoCloseable {
 
     <T extends RootEntity> void reject(ChangeRequest<T> request);
 
-    <T extends VersionedEntity> T find(Class<T> type, UUID uuid);
+    <T extends RootEntity> void destroy(ChangeRequest<T> request);
+
+    <T extends RootEntity> void destroy(ChangeRequestSpecification<T> specification);
+
+    <T extends Particle> T find(Class<T> type, UUID uuid);
 
     EntityManager em();
 

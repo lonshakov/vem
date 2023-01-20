@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import lsa.prototype.vem.engine.impl.request.ChangerImpl;
+import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.context.ChangeOperation;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeState;
@@ -44,7 +45,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     public <T extends RootEntity> ChangeRequest<T> persist(T entity) {
         if (entity == null)
             return null;
-        ChangeRequest<T> request = getChanger().instantiate(entity);
+        ChangeRequest<T> request = getChanger().createChangeRequest(entity);
 
         em.persist(request);
         em.persist(entity);
@@ -61,7 +62,10 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         T entity = specification.getRoot();
         em.persist(entity);
 
-        return persistCRS(specification, entity);
+        ChangeRequest<T> request = getChanger().createChangeRequest(entity);
+        em.persist(request);
+
+        return persistCRS(specification, entity, request);
     }
 
     @Override
@@ -69,7 +73,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         if (entity == null || entity.getId() == 0)
             return null;
         T storedEntity = find((Class<T>) entity.getClass(), entity.getUuid());
-        ChangeRequest<T> request = getChanger().instantiate(storedEntity);
+        ChangeRequest<T> request = getChanger().createChangeRequest(storedEntity);
 
         em.persist(request);
 
@@ -82,8 +86,20 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         T entity = specification.getRoot();
         if (entity == null || entity.getId() == 0)
             return null;
+
+        ChangeRequest<T> request;
+        if (specification.getUuid() == null) {
+            request = getChanger().createChangeRequest(entity);
+            em.persist(request);
+        } else {
+            Class<ChangeRequest<T>> type = getChanger().getRequestDatatype(entity).getJavaType();
+            request = find(type, specification.getUuid());
+        }
+        if (request == null)
+            return null;//todo
+
         T storedEntity = find((Class<T>) entity.getClass(), entity.getUuid());
-        return persistCRS(specification, storedEntity);
+        return persistCRS(specification, storedEntity, request);
     }
 
     @Override
@@ -101,7 +117,6 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     @Override
     public <T extends RootEntity> void affirm(ChangeRequest<T> request) {
         checkState(request, "affirm", ChangeState.StateType.PUBLISHED);
-
         long versionDate = System.currentTimeMillis();
 
         T root = request.getRoot();
@@ -110,14 +125,14 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             em.persist(request.getRoot());
         }
 
-        Map<Class<?>, List<LeafEntity<?>>> units = getChanger().map(request);
-
-        units.forEach((type, entities) -> entities.forEach(entity -> {
+        getChanger().stream(request, true).forEach(entity -> {
             processHistoryIncrement(entity, versionDate);
             em.persist(entity);
-        }));
+        });
 
-        units.forEach((type, entities) -> entities.forEach(entity -> processAffinityWiring(versionDate, entity)));
+        getChanger().stream(request, true).forEach(entity -> {
+            processAffinityWiring(versionDate, entity);
+        });
 
         request.setState(ChangeState.StateType.AFFIRMED, versionDate);
         em.persist(request);
@@ -126,11 +141,22 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     @Override
     public <T extends RootEntity> void reject(ChangeRequest<T> request) {
         checkState(request, "reject", ChangeState.StateType.PUBLISHED);
-        //todo
+        request.setState(ChangeState.StateType.REJECTED, System.currentTimeMillis());
+        em.persist(request);
     }
 
     @Override
-    public <T extends VersionedEntity> T find(Class<T> type, UUID uuid) {
+    public <T extends RootEntity> void destroy(ChangeRequest<T> request) {
+
+    }
+
+    @Override
+    public <T extends RootEntity> void destroy(ChangeRequestSpecification<T> specification) {
+
+    }
+
+    @Override
+    public <T extends Particle> T find(Class<T> type, UUID uuid) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> query = cb.createQuery(type);
         Root<T> root = query.from(type);
@@ -169,26 +195,19 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             throw new VersioningException("Ошибка при попытке обработать методом " + methodName + " заявку на изменение в статусе " + request.getState());
     }
 
-    private <T extends RootEntity> ChangeRequest<T> persistCRS(ChangeRequestSpecification<T> specification, T entity) {
-        ChangeRequest<T> request = getChanger().instantiate(entity);
-        em.persist(request);
-
-        Datatype<?> unitDatatype = getFactory().getHistoryMapping().get(entity).getUnitDatatype();
+    private <T extends RootEntity> ChangeRequest<T> persistCRS(ChangeRequestSpecification<T> specification, T entity, ChangeRequest<T> request) {
         specification.getUnits().forEach(u -> {
-            ChangeUnit<ChangeRequest<T>> unit = (ChangeUnit<ChangeRequest<T>>) unitDatatype.instantiate();
-            LeafEntity<?> leaf = u.getLeaf();
-            ChangeOperation operation = u.getOperation();
+            em.persist(u.getLeaf());
 
-            if (operation.equals(ChangeOperation.REMOVE)) {
-                leaf.getVersion().setStateType(EntityVersion.StateType.PURGE);
-            }
+            if (u.getOperation().equals(ChangeOperation.REMOVE))
+                u.getLeaf().getVersion().setStateType(EntityVersion.StateType.PURGE);
 
-            em.persist(leaf);
+            ChangeUnit<ChangeRequest<T>> unit = getChanger().createChangeUnit(
+                    request,
+                    u.getLeaf(),
+                    u.getOperation()
+            );
             em.persist(unit);
-
-            unit.setOperation(operation);
-            unit.setLeaf(leaf);
-            unit.setRequest(request);
         });
         return request;
     }

@@ -13,9 +13,9 @@ public interface ChangeRequestSpecification<T extends RootEntity> extends Serial
 
     T getRoot();
 
-    Set<Unit<T>> getUnits();
+    Set<Unit> getUnits();
 
-    interface Unit<T> {
+    interface Unit extends Serializable {
         ChangeOperation getOperation();
 
         LeafEntity<?> getLeaf();

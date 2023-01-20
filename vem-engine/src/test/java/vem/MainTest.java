@@ -1,10 +1,14 @@
 package vem;
 
 import jakarta.persistence.EntityManager;
+import lsa.prototype.vem.engine.impl.request.CRSpecificationDTO;
+import lsa.prototype.vem.engine.impl.request.CRUnitDTO;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
+import lsa.prototype.vem.model.context.ChangeOperation;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.version.EntityVersion;
 import lsa.prototype.vem.model.version.LeafEntity;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
@@ -60,7 +64,7 @@ public class MainTest {
                     .createQuery("select c from StoreChangeRequest c where c.root.name = 'Macy''s'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            Assertions.assertEquals(3, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(3, vem.getChanger().getUnits(request).size());
 
             Store store = vem.em()
                     .createQuery("select s from Store s where s.name = 'Macy''s'", Store.class)
@@ -94,7 +98,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(3, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(3, vem.getChanger().getUnits(request).size());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -114,7 +118,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -133,7 +137,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -156,7 +160,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -178,7 +182,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -203,11 +207,52 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().stream(request).count());
+            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
             System.out.println();
+        });
+    }
+
+    @Test
+    void testChangeRequestSpecification() {
+        isolator.accept((vem) -> {
+            Store store = new Store("drugs");
+
+            StoreBody body = new StoreBody("One Pickwick Plaza");
+            body.setAffinity(store.getUuid());
+
+            Parcel parcel = new Parcel("patches");
+            parcel.setAffinity(store.getUuid());
+
+            ChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(null, store);
+            crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, body));
+            crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, parcel));
+
+            ChangeRequest<Store> request = vem.persist(crs);
+            vem.publish(request);
+            vem.affirm(request);
+        });
+        isolator.accept((vem) -> {
+            ChangeRequest<Store> request = vem.em()
+                    .createQuery("select r from StoreChangeRequest r where r.root.name = 'drugs'", StoreChangeRequest.class)
+                    .getSingleResult();
+
+            Assertions.assertEquals(2, vem.getChanger().getUnits(request).size());
+        });
+    }
+
+    @Test
+    void testRemoveRequest() {
+        isolator.accept((vem) -> {
+            Store store = new Store("dixie");
+            store.setBody(new StoreBody("urengoi"));
+            store.getParcels().add(new Parcel("sweets"));
+
+            ChangeRequest<Store> request = vem.persist(store);
+            vem.publish(request);
+            vem.reject(request);
         });
     }
 
@@ -237,7 +282,7 @@ public class MainTest {
                     .createQuery("select r from StoreChangeRequest r where r.root.name = 'ozon'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            LeafEntity<?> queriedLeaf = vem.getChanger().stream(queriedRequest).findFirst().get();
+            LeafEntity<?> queriedLeaf = vem.getChanger().stream(queriedRequest, false).findFirst().get();
 
             Assertions.assertEquals("ozon", queriedRequest.getRoot().getName());
             Assertions.assertEquals("notebook", ((Parcel) queriedLeaf).getName());

@@ -1,93 +1,96 @@
 package lsa.prototype.vem.engine.impl.request;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import lsa.prototype.vem.model.context.ChangeOperation;
 import lsa.prototype.vem.model.context.ChangeRequest;
 import lsa.prototype.vem.model.context.ChangeUnit;
 import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.spi.request.Changer;
+import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.schema.HistoryMapping;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class ChangerImpl implements Changer {
     private final VersioningEntityManager vem;
-    private final CriteriaBuilder jpaCriteriaBuilder;
 
     public ChangerImpl(VersioningEntityManager vem) {
         this.vem = vem;
-        jpaCriteriaBuilder = vem.getFactory().getJpaFactory().getCriteriaBuilder();
     }
 
-    public <T extends RootEntity> ChangeRequest<T> instantiate(T entity) {
-        ChangeRequest<T> request = (ChangeRequest<T>) vem.getFactory().getHistoryMapping().get(entity).getRequestDatatype().instantiate();
+    @Override
+    public <T extends RootEntity> ChangeRequest<T> createChangeRequest(T entity) {
+        ChangeRequest<T> request = getRequestDatatype(entity).instantiate();
         request.setRoot(entity);
         return request;
     }
 
     @Override
-    public <T extends RootEntity> Stream<LeafEntity<?>> stream(ChangeRequest<T> request) {
-        return getUnits(request).stream()
-                .map(ChangeUnit::getLeaf)
-                .map(o -> (LeafEntity<?>) vem.em().getReference(o.getType(), o.getId()));
+    public <T extends RootEntity> ChangeUnit<ChangeRequest<T>> createChangeUnit(ChangeRequest<T> request, LeafEntity<?> leaf, ChangeOperation operation) {
+        ChangeUnit<ChangeRequest<T>> unit = getUnitDatatype(request.getRoot()).instantiate();
+        unit.setRequest(request);
+        unit.setLeaf(leaf);
+        unit.setOperation(operation);
+        return unit;
     }
 
     @Override
-    public <T extends RootEntity>
-    Map<Class<?>, List<LeafEntity<?>>> map(ChangeRequest<T> request) {
-        return mapTypedUnits(request).entrySet().stream().map(bucket -> {
-            Class<LeafEntity<?>> leafType = (Class<LeafEntity<?>>) bucket.getKey();
-            Set<Long> identifiers = bucket.getValue().stream().map(u -> u.getLeaf().getId()).collect(Collectors.toSet());
-
-            CriteriaQuery<LeafEntity<?>> query = cb().createQuery(leafType);
-            jakarta.persistence.criteria.Root<LeafEntity<?>> root = query.from(leafType);
-
-            query.select(root).where(root.get("id").in(identifiers));
-            List<LeafEntity<?>> results = vem.em().createQuery(query).getResultList();
-
-            return Map.entry(bucket.getKey(), results);
-        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    public <T extends RootEntity> Datatype<ChangeRequest<T>> getRequestDatatype(T entity) {
+        HistoryMapping<T> mapping = (HistoryMapping<T>) vem.getFactory().getHistoryMapping().get(entity);
+        return mapping.getRequestDatatype();
     }
 
-    private CriteriaBuilder cb() {
-        return jpaCriteriaBuilder;
+    @Override
+    public <T extends RootEntity> Datatype<ChangeUnit<ChangeRequest<T>>> getUnitDatatype(T entity) {
+        HistoryMapping<T> mapping = (HistoryMapping<T>) vem.getFactory().getHistoryMapping().get(entity);
+        return mapping.getUnitDatatype();
     }
 
-    private <T extends RootEntity>
-    Map<Class<?>, List<ChangeUnit<ChangeRequest<T>>>> mapTypedUnits(ChangeRequest<T> request) {
-        return getUnits(request)
-                .stream()
-                .collect(Collectors.groupingBy(o -> o.getLeaf().getType()));
-    }
-
-    private <T extends RootEntity>
-    List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request) {
-        return vem.em()
-                .createQuery(getUnitQuery(request))
-                .getResultList();
-    }
-
-    public <T extends RootEntity>
-    CriteriaQuery<ChangeUnit<ChangeRequest<T>>> getUnitQuery(ChangeRequest<T> request) {
-        HistoryMapping<T> historyMapping = (HistoryMapping<T>) vem.getHistoryMappings().get(request.getRoot());
-
-        Class<ChangeUnit<ChangeRequest<T>>> unitType = historyMapping
-                .getUnitDatatype()
-                .getJavaType();
+    @Override
+    public <T extends RootEntity> List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request) {
+        Class<ChangeUnit<ChangeRequest<T>>> type = getUnitDatatype(request.getRoot()).getJavaType();
+        CriteriaBuilder cb = vem.em().getCriteriaBuilder();
 
         CriteriaQuery<ChangeUnit<ChangeRequest<T>>> query =
-                cb().createQuery(unitType);
+                cb.createQuery(type);
+        Root<ChangeUnit<ChangeRequest<T>>> root =
+                query.from(type);
+        query.select(root)
+                .where(cb.equal(root.get("request"), request));
 
-        jakarta.persistence.criteria.Root<ChangeUnit<ChangeRequest<T>>> root =
-                query.from(unitType);
+        return vem.em().createQuery(query).getResultList();
+    }
 
-        query.select(root).where(cb().equal(root.get("request"), request));
-        return query;
+    @Override
+    public <T extends RootEntity> LeafEntity<?> fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy) {
+        EntityManager em = vem.em();
+        Class<LeafEntity<?>> type = (Class<LeafEntity<?>>) unit.getLeaf().getType();
+        long id = unit.getLeaf().getId();
+
+        return lazy ? em.getReference(type, id) : em.find(type, id);
+    }
+
+    @Override
+    public <T extends RootEntity> Stream<LeafEntity<?>> stream(ChangeRequest<T> request, boolean batch) {
+        if (!batch) {
+            return getUnits(request).stream().map(u -> fetch(u, true));
+        }
+        Iterator<LeafEntity<?>> iterator = new BatchIterator(
+                request,
+                vem.getChanger(),
+                vem.em()
+        );
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
+                false
+        );
     }
 }
