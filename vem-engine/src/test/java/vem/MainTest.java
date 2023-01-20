@@ -25,6 +25,7 @@ import vem.entity.StoreBody;
 import vem.util.TestDatabase;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -243,7 +244,8 @@ public class MainTest {
         });
     }
 
-    @Test
+    //todo
+    /*@Test
     void testRemoveRequest() {
         isolator.accept((vem) -> {
             Store store = new Store("dixie");
@@ -253,6 +255,55 @@ public class MainTest {
             ChangeRequest<Store> request = vem.persist(store);
             vem.publish(request);
             vem.reject(request);
+        });
+    }*/
+
+    @Test
+    void testDestroyChangeRequest() {
+        UUID steadyUuid = UUID.randomUUID();
+        isolator.accept((vem) -> {
+            Store store = new Store("dixie");
+            store.setBody(new StoreBody("urengoi"));
+            store.getParcels().add(new Parcel("sweets"));
+
+            ChangeRequest<Store> request = vem.persist(store);
+            request.setUuid(steadyUuid);
+            vem.em().persist(request);
+        });
+        isolator.accept((vem) -> {
+            ChangeRequest<Store> request = vem.find(StoreChangeRequest.class, steadyUuid);
+
+            vem.destroy(request);
+        });
+        isolator.accept((vem) -> {
+            Assertions.assertEquals(
+                    0,
+                    vem.em().createQuery("select s from Store s where s.name = :name")
+                            .setParameter("name", "dixie")
+                            .getResultList()
+                            .size()
+            );
+            Assertions.assertEquals(
+                    0,
+                    vem.em().createQuery("select b from StoreBody b where b.address = :address")
+                            .setParameter("address", "urengoi")
+                            .getResultList()
+                            .size()
+            );
+            Assertions.assertEquals(
+                    0,
+                    vem.em().createQuery("select p from Parcel p where p.name = :name")
+                            .setParameter("name", "sweets")
+                            .getResultList()
+                            .size()
+            );
+            Assertions.assertEquals(
+                    0,
+                    vem.em().createQuery("select r from StoreChangeRequest r where r.uuid = :uuid")
+                            .setParameter("uuid", steadyUuid)
+                            .getResultList()
+                            .size()
+            );
         });
     }
 

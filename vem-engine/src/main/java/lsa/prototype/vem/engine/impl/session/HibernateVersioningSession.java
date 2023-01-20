@@ -147,12 +147,18 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends RootEntity> void destroy(ChangeRequest<T> request) {
-
+        checkState(request, "destroy", ChangeState.StateType.DRAFT);
+        getChanger().stream(request, true).forEach(em::remove);
+        getChanger().getUnits(request).forEach(em::remove);
+        em.remove(request.getRoot());
+        em.remove(request);
     }
 
     @Override
     public <T extends RootEntity> void destroy(ChangeRequestSpecification<T> specification) {
-
+        Class<ChangeRequest<T>> type = getChanger().getRequestDatatype(specification.getRoot()).getJavaType();
+        ChangeRequest<T> request = find(type, specification.getUuid());
+        destroy(request);
     }
 
     @Override
