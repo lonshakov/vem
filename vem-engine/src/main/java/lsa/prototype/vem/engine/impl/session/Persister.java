@@ -23,11 +23,11 @@ public class Persister implements PersistenceProcessor {
     public <T extends RootEntity, R extends ChangeRequest<T>, V extends VersionedEntity>
     void process(V oldEntity, V newEntity, R request, VersioningEntityManager vem) {
         Datatype<V> datatype = vem.getSchema().datatype(newEntity);
-        UUID affinity = oldEntity.getUuid();
+        UUID parentUuid = oldEntity.getUuid();
 
         for (Parameter<V> parameter : datatype.collections().values()) {
             for (LeafEntity<VersionedEntity> leaf : (Iterable<LeafEntity<VersionedEntity>>) parameter.get(newEntity)) {
-                leaf.setAffinity(affinity);
+                leaf.setParentUuid(parentUuid);
                 bind(request, leaf, vem);
                 process(leaf, leaf, request, vem);
             }
@@ -41,7 +41,7 @@ public class Persister implements PersistenceProcessor {
             if (leaf == null) {
                 continue;
             }
-            leaf.setAffinity(affinity);
+            leaf.setParentUuid(parentUuid);
             bind(request, leaf, vem);
         }
     }

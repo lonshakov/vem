@@ -144,8 +144,8 @@ public class MainTest {
 
             Assertions.assertEquals(1, store.getParcels().size());
 
-            List<Parcel> parcels = vem.em().createQuery("select p from Parcel p where p.affinity = :affinity", Parcel.class)
-                    .setParameter("affinity", store.getUuid())
+            List<Parcel> parcels = vem.em().createQuery("select p from Parcel p where p.parentUuid = :parentUuid", Parcel.class)
+                    .setParameter("parentUuid", store.getUuid())
                     .getResultList();
 
             Assertions.assertEquals(2, parcels.size());
@@ -190,8 +190,8 @@ public class MainTest {
 
             Assertions.assertEquals(1, parcel.getItems().size());
 
-            List<Item> items = vem.em().createQuery("select i from Item i where i.affinity = :affinity", Item.class)
-                    .setParameter("affinity", parcel.getUuid())
+            List<Item> items = vem.em().createQuery("select i from Item i where i.parentUuid = :parentUuid", Item.class)
+                    .setParameter("parentUuid", parcel.getUuid())
                     .getResultList();
 
             Assertions.assertEquals(2, items.size());
@@ -221,10 +221,10 @@ public class MainTest {
             Store store = new Store("drugs");
 
             StoreBody body = new StoreBody("One Pickwick Plaza");
-            body.setAffinity(store.getUuid());
+            body.setParentUuid(store.getUuid());
 
             Parcel parcel = new Parcel("patches");
-            parcel.setAffinity(store.getUuid());
+            parcel.setParentUuid(store.getUuid());
 
             ChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(null, store);
             crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, body));

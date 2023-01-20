@@ -131,7 +131,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         });
 
         getChanger().stream(request, true).forEach(entity -> {
-            processAffinityWiring(versionDate, entity);
+            processParentWiring(versionDate, entity);
         });
 
         request.setState(ChangeState.StateType.AFFIRMED, versionDate);
@@ -212,7 +212,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         return request;
     }
 
-    private void processAffinityWiring(long versionDate, VersionedEntity entity) {
+    private void processParentWiring(long versionDate, VersionedEntity entity) {
         switch (entity.getVersion().getStateType()) {
             case ACTIVE -> {
                 if (entity instanceof LeafEntity<?>) {
@@ -274,7 +274,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         Root<P> root = query.from(type);
 
         query.select(root).where(
-                cb.equal(root.get("uuid"), entity.getAffinity()),
+                cb.equal(root.get("uuid"), entity.getParentUuid()),
                 cb.equal(root.get("version").get("stateType"), EntityVersion.StateType.ACTIVE)
         );
 

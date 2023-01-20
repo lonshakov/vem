@@ -7,12 +7,11 @@ import jakarta.persistence.MappedSuperclass;
 import java.util.UUID;
 
 @MappedSuperclass
-//@Index(name = "affinity_idx", columnList = "affinity")
 public class LeafEntity<P extends VersionedEntity> extends VersionedEntity {
     @ManyToOne
     private P parent;
     @Column(columnDefinition = "uuid")
-    private UUID affinity;
+    private UUID parentUuid;
 
     public P getParent() {
         return parent;
@@ -22,11 +21,11 @@ public class LeafEntity<P extends VersionedEntity> extends VersionedEntity {
         this.parent = parent;
     }
 
-    public UUID getAffinity() {
-        return affinity;
+    public UUID getParentUuid() {
+        return parentUuid;
     }
 
-    public void setAffinity(UUID affinity) {
-        this.affinity = affinity;
+    public void setParentUuid(UUID parentUuid) {
+        this.parentUuid = parentUuid;
     }
 }
