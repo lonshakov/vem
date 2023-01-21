@@ -2,13 +2,13 @@ package lsa.prototype.vem.model.version;
 
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
-import lsa.prototype.vem.model.ILeafEntity;
-import lsa.prototype.vem.model.IVersionedEntity;
+import lsa.prototype.vem.model.Leaf;
+import lsa.prototype.vem.model.Versionable;
 
 import java.io.Serializable;
 
 @MappedSuperclass
-public class LeafEntity<P extends IVersionedEntity> extends VersionedEntity implements ILeafEntity<P> {
+public class LeafEntity<P extends Versionable> extends VersionedEntity implements Leaf<P> {
     @ManyToOne
     private P parent;
     private String parentUuid;

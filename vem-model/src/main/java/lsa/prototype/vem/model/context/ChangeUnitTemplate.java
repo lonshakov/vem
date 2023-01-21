@@ -4,11 +4,11 @@ import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.IChangeUnit;
+import lsa.prototype.vem.request.ChangeUnit;
 import lsa.prototype.vem.request.PolymorphEntity;
 
 @MappedSuperclass
-public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject implements IChangeUnit<R> {
+public class ChangeUnitTemplate<R extends ChangeRequestTemplate<?>> extends PersistedObject implements ChangeUnit<R> {
     @AttributeOverrides({
             @AttributeOverride(name = "type", column = @Column(name = "leaf_type")),
             @AttributeOverride(name = "id", column = @Column(name = "leaf_id"))

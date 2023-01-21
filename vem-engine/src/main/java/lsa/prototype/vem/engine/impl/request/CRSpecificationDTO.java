@@ -1,13 +1,13 @@
 package lsa.prototype.vem.engine.impl.request;
 
-import lsa.prototype.vem.model.IRootEntity;
-import lsa.prototype.vem.request.IChangeRequestSpecification;
+import lsa.prototype.vem.model.Root;
+import lsa.prototype.vem.request.ChangeRequestSpecification;
 
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CRSpecificationDTO<T extends IRootEntity> implements IChangeRequestSpecification<T> {
+public class CRSpecificationDTO<T extends Root> implements ChangeRequestSpecification<T> {
     private Serializable id;
     private Serializable uuid;
     private T root;

@@ -1,13 +1,13 @@
 package lsa.prototype.vem.model;
 
-public class EntityVersion {
+public class Version {
     private StateType stateType;
     private long date;
 
-    public EntityVersion() {
+    public Version() {
     }
 
-    public EntityVersion(StateType stateType, long date) {
+    public Version(StateType stateType, long date) {
         this.stateType = stateType;
         this.date = date;
     }

@@ -1,6 +1,6 @@
 package lsa.prototype.vem.request;
 
-public interface IChangeUnit<R extends IChangeRequest<?>> {
+public interface ChangeUnit<R extends ChangeRequest<?>> {
     R getRequest();
 
     void setRequest(R request);

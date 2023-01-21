@@ -1,14 +1,14 @@
 package lsa.prototype.vem.engine.impl.request;
 
-import lsa.prototype.vem.model.ILeafEntity;
+import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.IChangeRequestSpecification;
+import lsa.prototype.vem.request.ChangeRequestSpecification;
 
-public class CRUnitDTO implements IChangeRequestSpecification.Unit {
+public class CRUnitDTO implements ChangeRequestSpecification.Unit {
     private ChangeOperation operation;
-    private ILeafEntity<?> leaf;
+    private Leaf<?> leaf;
 
-    public CRUnitDTO(ChangeOperation operation, ILeafEntity<?> leaf) {
+    public CRUnitDTO(ChangeOperation operation, Leaf<?> leaf) {
         this.operation = operation;
         this.leaf = leaf;
     }
@@ -22,7 +22,7 @@ public class CRUnitDTO implements IChangeRequestSpecification.Unit {
     }
 
     @Override
-    public ILeafEntity<?> getLeaf() {
+    public Leaf<?> getLeaf() {
         return leaf;
     }
 }

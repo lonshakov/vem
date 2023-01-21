@@ -3,12 +3,12 @@ package lsa.prototype.vem.model.context;
 import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.version.RootEntity;
+import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.request.ChangeState;
-import lsa.prototype.vem.request.IChangeRequest;
 import lsa.prototype.vem.request.Sign;
 
 @MappedSuperclass
-public class ChangeRequest<T extends RootEntity> extends Particle implements IChangeRequest<T> {
+public class ChangeRequestTemplate<T extends RootEntity> extends Particle implements ChangeRequest<T> {
     @AttributeOverrides({
             @AttributeOverride(name = "type", column = @Column(name = "request_state")),
             @AttributeOverride(name = "date", column = @Column(name = "request_date"))

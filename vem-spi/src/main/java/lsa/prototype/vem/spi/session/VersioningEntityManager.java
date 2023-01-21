@@ -1,10 +1,10 @@
 package lsa.prototype.vem.spi.session;
 
 import jakarta.persistence.EntityManager;
-import lsa.prototype.vem.model.IGlobalEntity;
-import lsa.prototype.vem.model.IRootEntity;
-import lsa.prototype.vem.request.IChangeRequest;
-import lsa.prototype.vem.request.IChangeRequestSpecification;
+import lsa.prototype.vem.model.GlobalEntity;
+import lsa.prototype.vem.model.Root;
+import lsa.prototype.vem.request.ChangeRequest;
+import lsa.prototype.vem.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
@@ -12,27 +12,27 @@ import lsa.prototype.vem.spi.schema.Schema;
 import java.io.Serializable;
 
 public interface VersioningEntityManager extends AutoCloseable {
-    <T extends IRootEntity> IChangeRequest<T> persist(T entity);
+    <T extends Root> ChangeRequest<T> persist(T entity);
 
-    <T extends IRootEntity> IChangeRequest<T> persist(IChangeRequestSpecification<T> specification);
+    <T extends Root> ChangeRequest<T> persist(ChangeRequestSpecification<T> specification);
 
-    <T extends IRootEntity> IChangeRequest<T> merge(T entity);
+    <T extends Root> ChangeRequest<T> merge(T entity);
 
-    <T extends IRootEntity> IChangeRequest<T> merge(IChangeRequestSpecification<T> specification);
+    <T extends Root> ChangeRequest<T> merge(ChangeRequestSpecification<T> specification);
 
-    <T extends IRootEntity> IChangeRequest<T> remove(T entity);
+    <T extends Root> ChangeRequest<T> remove(T entity);
 
-    <T extends IRootEntity> void publish(IChangeRequest<T> request);
+    <T extends Root> void publish(ChangeRequest<T> request);
 
-    <T extends IRootEntity> void affirm(IChangeRequest<T> request);
+    <T extends Root> void affirm(ChangeRequest<T> request);
 
-    <T extends IRootEntity> void reject(IChangeRequest<T> request);
+    <T extends Root> void reject(ChangeRequest<T> request);
 
-    <T extends IRootEntity> void destroy(IChangeRequest<T> request);
+    <T extends Root> void destroy(ChangeRequest<T> request);
 
-    <T extends IRootEntity> void destroy(IChangeRequestSpecification<T> specification);
+    <T extends Root> void destroy(ChangeRequestSpecification<T> specification);
 
-    <T extends IGlobalEntity> T find(Class<T> type, Serializable uuid);
+    <T extends GlobalEntity> T find(Class<T> type, Serializable uuid);
 
     EntityManager em();
 

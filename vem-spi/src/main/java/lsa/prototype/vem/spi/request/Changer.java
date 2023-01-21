@@ -1,30 +1,30 @@
 package lsa.prototype.vem.spi.request;
 
-import lsa.prototype.vem.model.ILeafEntity;
-import lsa.prototype.vem.model.IRootEntity;
+import lsa.prototype.vem.model.Leaf;
+import lsa.prototype.vem.model.Root;
 import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.IChangeRequest;
-import lsa.prototype.vem.request.IChangeUnit;
+import lsa.prototype.vem.request.ChangeRequest;
+import lsa.prototype.vem.request.ChangeUnit;
 import lsa.prototype.vem.spi.schema.Datatype;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 public interface Changer {
-    <T extends IRootEntity> IChangeRequest<T> createChangeRequest(T entity);
+    <T extends Root> ChangeRequest<T> createChangeRequest(T entity);
 
-    <T extends IRootEntity> IChangeUnit<IChangeRequest<T>> createChangeUnit(
-            IChangeRequest<T> request,
-            ILeafEntity<?> leaf,
+    <T extends Root> ChangeUnit<ChangeRequest<T>> createChangeUnit(
+            ChangeRequest<T> request,
+            Leaf<?> leaf,
             ChangeOperation operation);
 
-    <T extends IRootEntity> Datatype<IChangeRequest<T>> getRequestDatatype(T entity);
+    <T extends Root> Datatype<ChangeRequest<T>> getRequestDatatype(T entity);
 
-    <T extends IRootEntity> Datatype<IChangeUnit<IChangeRequest<T>>> getUnitDatatype(T entity);
+    <T extends Root> Datatype<ChangeUnit<ChangeRequest<T>>> getUnitDatatype(T entity);
 
-    <T extends IRootEntity> List<IChangeUnit<IChangeRequest<T>>> getUnits(IChangeRequest<T> request);
+    <T extends Root> List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request);
 
-    <T extends IRootEntity> ILeafEntity<?> fetch(IChangeUnit<IChangeRequest<T>> unit, boolean lazy);
+    <T extends Root> Leaf<?> fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy);
 
-    <T extends IRootEntity> Stream<ILeafEntity<?>> stream(IChangeRequest<T> request, boolean batch);
+    <T extends Root> Stream<Leaf<?>> stream(ChangeRequest<T> request, boolean batch);
 }

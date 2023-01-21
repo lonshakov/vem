@@ -4,12 +4,12 @@ import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.request.CRSpecificationDTO;
 import lsa.prototype.vem.engine.impl.request.CRUnitDTO;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
-import lsa.prototype.vem.model.EntityVersion;
-import lsa.prototype.vem.model.ILeafEntity;
-import lsa.prototype.vem.model.context.ChangeRequest;
+import lsa.prototype.vem.model.Leaf;
+import lsa.prototype.vem.model.Version;
+import lsa.prototype.vem.model.context.ChangeRequestTemplate;
 import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.IChangeRequest;
-import lsa.prototype.vem.request.IChangeRequestSpecification;
+import lsa.prototype.vem.request.ChangeRequest;
+import lsa.prototype.vem.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
@@ -57,7 +57,7 @@ public class MainTest {
             Item item = new Item("Converse");
             parcel.getItems().add(item);
 
-            IChangeRequest<Store> request = vem.persist(store);
+            ChangeRequest<Store> request = vem.persist(store);
             vem.publish(request);
             vem.affirm(request);
         });
@@ -96,7 +96,7 @@ public class MainTest {
 
             store.getParcels().add(parcel);
 
-            IChangeRequest<Store> request = vem.persist(store);
+            ChangeRequest<Store> request = vem.persist(store);
             vem.publish(request);
             vem.affirm(request);
 
@@ -116,7 +116,7 @@ public class MainTest {
 
             store.getParcels().add(new Parcel("box2"));
 
-            IChangeRequest<Store> request = vem.merge(store);
+            ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
@@ -133,9 +133,9 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             Parcel box2 = store.getParcels().stream().filter(p -> p.getName().equals("box2")).findFirst().get();
 
-            box2.getVersion().setStateType(EntityVersion.StateType.PURGE);
+            box2.getVersion().setStateType(Version.StateType.PURGE);
 
-            IChangeRequest<Store> request = vem.merge(store);
+            ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
@@ -158,7 +158,7 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             store.getParcels().get(0).getItems().add(new Item("item2"));
 
-            IChangeRequest<Store> request = vem.merge(store);
+            ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
@@ -178,9 +178,9 @@ public class MainTest {
                     .filter(item -> item.getName().equals("item2"))
                     .findFirst().get();
 
-            item2.getVersion().setStateType(EntityVersion.StateType.PURGE);
+            item2.getVersion().setStateType(Version.StateType.PURGE);
 
-            IChangeRequest<Store> request = vem.merge(store);
+            ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
@@ -203,9 +203,9 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             StoreBody body = store.getBody();
             body.setAddress("Phuket");
-            body.getVersion().setStateType(EntityVersion.StateType.DRAFT);
+            body.getVersion().setStateType(Version.StateType.DRAFT);
 
-            IChangeRequest<Store> request = vem.merge(store);
+            ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
@@ -228,16 +228,16 @@ public class MainTest {
             Parcel parcel = new Parcel("patches");
             parcel.setParentUuid(store.getUuid());
 
-            IChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(store);
+            ChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(store);
             crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, body));
             crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, parcel));
 
-            IChangeRequest<Store> request = vem.persist(crs);
+            ChangeRequest<Store> request = vem.persist(crs);
             vem.publish(request);
             vem.affirm(request);
         });
         isolator.accept((vem) -> {
-            ChangeRequest<Store> request = vem.em()
+            ChangeRequestTemplate<Store> request = vem.em()
                     .createQuery("select r from StoreChangeRequest r where r.root.name = 'drugs'", StoreChangeRequest.class)
                     .getSingleResult();
 
@@ -267,12 +267,12 @@ public class MainTest {
             store.setBody(new StoreBody("urengoi"));
             store.getParcels().add(new Parcel("sweets"));
 
-            IChangeRequest<Store> request = vem.persist(store);
+            ChangeRequest<Store> request = vem.persist(store);
             request.setUuid(steadyUuid);
             vem.em().persist(request);
         });
         isolator.accept((vem) -> {
-            IChangeRequest<Store> request = vem.find(StoreChangeRequest.class, steadyUuid);
+            ChangeRequest<Store> request = vem.find(StoreChangeRequest.class, steadyUuid);
 
             vem.destroy(request);
         });
@@ -334,7 +334,7 @@ public class MainTest {
                     .createQuery("select r from StoreChangeRequest r where r.root.name = 'ozon'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            ILeafEntity<?> queriedLeaf = vem.getChanger().stream(queriedRequest, false).findFirst().get();
+            Leaf<?> queriedLeaf = vem.getChanger().stream(queriedRequest, false).findFirst().get();
 
             Assertions.assertEquals("ozon", queriedRequest.getRoot().getName());
             Assertions.assertEquals("notebook", ((Parcel) queriedLeaf).getName());
