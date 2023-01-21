@@ -1,4 +1,4 @@
-package lsa.prototype.vem.model.context;
+package lsa.prototype.vem.request;
 
 public enum ChangeOperation {
     ADD, REMOVE, REPLACE

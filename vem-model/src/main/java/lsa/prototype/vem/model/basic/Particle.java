@@ -1,20 +1,19 @@
 package lsa.prototype.vem.model.basic;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @MappedSuperclass
 public class Particle extends PersistedObject {
-    @Column(columnDefinition = "uuid")
-    private UUID uuid = UUID.randomUUID();
+    private String uuid = UUID.randomUUID().toString();
 
-    public UUID getUuid() {
+    public Serializable getUuid() {
         return uuid;
     }
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
+    public void setUuid(Serializable uuid) {
+        this.uuid = uuid.toString();
     }
 }

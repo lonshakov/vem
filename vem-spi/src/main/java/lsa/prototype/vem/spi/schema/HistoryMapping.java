@@ -1,10 +1,10 @@
 package lsa.prototype.vem.spi.schema;
 
-import lsa.prototype.vem.model.context.ChangeRequest;
-import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.RootEntity;
+import lsa.prototype.vem.model.IRootEntity;
+import lsa.prototype.vem.request.IChangeRequest;
+import lsa.prototype.vem.request.IChangeUnit;
 
-public class HistoryMapping<T extends RootEntity> {
+public class HistoryMapping<T extends IRootEntity> {
     private final Datatype<T> root;
     private final Datatype<?> request;
     private final Datatype<?> unit;
@@ -19,11 +19,11 @@ public class HistoryMapping<T extends RootEntity> {
         return root;
     }
 
-    public <C extends ChangeRequest<T>> Datatype<C> getRequestDatatype() {
+    public <C extends IChangeRequest<T>> Datatype<C> getRequestDatatype() {
         return (Datatype<C>) request;
     }
 
-    public <U extends ChangeUnit<ChangeRequest<T>>> Datatype<U> getUnitDatatype() {
+    public <U extends IChangeUnit<IChangeRequest<T>>> Datatype<U> getUnitDatatype() {
         return (Datatype<U>) unit;
     }
 }

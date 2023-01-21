@@ -1,9 +1,7 @@
 package lsa.prototype.vem.spi.schema;
 
-import lsa.prototype.vem.model.basic.PersistedObject;
-
 public interface Accessor {
-    void set(PersistedObject entity, Object value);
+    void set(Object entity, Object value);
 
-    Object get(PersistedObject entity);
+    Object get(Object entity);
 }

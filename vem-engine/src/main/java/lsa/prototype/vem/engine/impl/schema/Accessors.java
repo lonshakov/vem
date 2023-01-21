@@ -1,6 +1,5 @@
 package lsa.prototype.vem.engine.impl.schema;
 
-import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.spi.schema.Accessor;
 import org.hibernate.persister.entity.EntityPersister;
 
@@ -15,12 +14,12 @@ public class Accessors {
         }
 
         @Override
-        public void set(PersistedObject entity, Object value) {
+        public void set(Object entity, Object value) {
             persister.getEntityTuplizer().setIdentifier(entity, (Serializable) value);
         }
 
         @Override
-        public Object get(PersistedObject entity) {
+        public Object get(Object entity) {
             return persister.getEntityTuplizer().getIdentifier(entity);
         }
     }
@@ -35,12 +34,12 @@ public class Accessors {
         }
 
         @Override
-        public void set(PersistedObject entity, Object value) {
+        public void set(Object entity, Object value) {
             persister.setPropertyValue(entity, index, value);
         }
 
         @Override
-        public Object get(PersistedObject entity) {
+        public Object get(Object entity) {
             return persister.getPropertyValue(entity, index);
         }
     }

@@ -1,8 +1,5 @@
-package lsa.prototype.vem.model.context;
+package lsa.prototype.vem.request;
 
-import jakarta.persistence.Embeddable;
-
-@Embeddable
 public class Sign {
     private String user;
     private long date;

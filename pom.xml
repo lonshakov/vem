@@ -13,6 +13,7 @@
         <module>vem-model</module>
         <module>vem-engine</module>
         <module>vem-spi</module>
+        <module>vem-domain</module>
     </modules>
 
     <properties>

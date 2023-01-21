@@ -1,7 +1,6 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.EntityType;
-import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Schema;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
@@ -21,7 +20,7 @@ public class HibernateSchema implements Schema {
     }
 
     @Override
-    public <T extends PersistedObject> Datatype<T> datatype(Class<T> type) {
+    public <T> Datatype<T> datatype(Class<T> type) {
         return (Datatype<T>) datatypes.get(type);
     }
 

@@ -1,8 +1,8 @@
 package lsa.prototype.vem.spi.schema;
 
-import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.RootEntity;
-import lsa.prototype.vem.model.version.VersionedEntity;
+import lsa.prototype.vem.model.IRootEntity;
+import lsa.prototype.vem.model.IVersionedEntity;
+import lsa.prototype.vem.request.IChangeUnit;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,10 +14,10 @@ public class HistoryMappings {
 
     public HistoryMappings(Schema schema) {
         Map<Class<?>, HistoryMapping<?>> distinct = StreamSupport.stream(schema.spliterator(), false)
-                .filter(o -> ChangeUnit.class.isAssignableFrom(o.getJavaType()))
+                .filter(o -> IChangeUnit.class.isAssignableFrom(o.getJavaType()))
                 .map(unit -> {
                     Datatype<?> request = unit.reference("request").getParameterDatatype();
-                    Datatype<? extends RootEntity> root = (Datatype<? extends RootEntity>) request.reference("root").getParameterDatatype();
+                    Datatype<? extends IRootEntity> root = (Datatype<? extends IRootEntity>) request.reference("root").getParameterDatatype();
                     return new HistoryMapping<>(root, request, unit);
                 })
                 .collect(Collectors.toMap(e -> e.getRootDatatype().getJavaType(), e -> e));
@@ -25,22 +25,22 @@ public class HistoryMappings {
 
         for (Datatype<?> datatype : schema) {
             Class<?> key = datatype.getJavaType();
-            if (VersionedEntity.class.isAssignableFrom(key)) {
+            if (IVersionedEntity.class.isAssignableFrom(key)) {
                 mappings.putIfAbsent(key, distinct.get(getRoot(key, schema)));
             }
         }
     }
 
-    public <V extends VersionedEntity> HistoryMapping<?> get(Class<V> type) {
+    public <V extends IVersionedEntity> HistoryMapping<?> get(Class<V> type) {
         return mappings.get(type);
     }
 
-    public <V extends VersionedEntity> HistoryMapping<?> get(V object) {
+    public <V extends IVersionedEntity> HistoryMapping<?> get(V object) {
         return get(object.getClass());
     }
 
     private Class<?> getRoot(Class key, Schema schema) {
-        if (RootEntity.class.isAssignableFrom(key)) {
+        if (IRootEntity.class.isAssignableFrom(key)) {
             return key;
         }
 

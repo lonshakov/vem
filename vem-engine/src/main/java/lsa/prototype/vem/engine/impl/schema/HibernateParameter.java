@@ -1,13 +1,12 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
-import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.spi.schema.Accessor;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import org.hibernate.type.Type;
 
-public class HibernateParameter<T extends PersistedObject> implements Parameter<T> {
+public class HibernateParameter<T> implements Parameter<T> {
     private final Datatype<T> structure;
     private final Attribute<? super T, ?> attribute;
     private final Accessor accessor;
@@ -33,7 +32,7 @@ public class HibernateParameter<T extends PersistedObject> implements Parameter<
     @Override
     public Datatype<?> getParameterDatatype() {
         return !isPrimitive()
-                ? structure.getSchema().datatype((Class<? extends PersistedObject>) getType())
+                ? structure.getSchema().datatype(getType())
                 : null;
     }
 

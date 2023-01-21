@@ -1,16 +1,7 @@
-package lsa.prototype.vem.model.version;
+package lsa.prototype.vem.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-
-@Embeddable
 public class EntityVersion {
-    @Enumerated(EnumType.STRING)
-    @Column(name = "version_state")
     private StateType stateType;
-    @Column(name = "version_date")
     private long date;
 
     public EntityVersion() {
@@ -37,7 +28,7 @@ public class EntityVersion {
         this.date = date;
     }
 
-    public static enum StateType {
+    public enum StateType {
         DRAFT, PURGE, ACTIVE, PASSIVE, HISTORY
     }
 }

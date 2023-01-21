@@ -3,9 +3,12 @@ package lsa.prototype.vem.model.context;
 import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.model.version.LeafEntity;
+import lsa.prototype.vem.request.ChangeOperation;
+import lsa.prototype.vem.request.IChangeUnit;
+import lsa.prototype.vem.request.PolymorphEntity;
 
 @MappedSuperclass
-public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
+public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject implements IChangeUnit<R> {
     @AttributeOverrides({
             @AttributeOverride(name = "type", column = @Column(name = "leaf_type")),
             @AttributeOverride(name = "id", column = @Column(name = "leaf_id"))
@@ -26,7 +29,7 @@ public class ChangeUnit<R extends ChangeRequest<?>> extends PersistedObject {
     }
 
     public void setLeaf(LeafEntity<?> leaf) {
-        this.leaf = new PolymorphEntity(leaf);
+        this.leaf = new PolymorphEntity(leaf.getClass(), leaf.getId());
     }
 
     public long getDate() {

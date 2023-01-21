@@ -1,10 +1,8 @@
 package lsa.prototype.vem.spi.schema;
 
-import lsa.prototype.vem.model.basic.PersistedObject;
-
 import java.util.Map;
 
-public interface Datatype<T extends PersistedObject> {
+public interface Datatype<T> {
     T instantiate();
 
     Parameter<T> identifier();

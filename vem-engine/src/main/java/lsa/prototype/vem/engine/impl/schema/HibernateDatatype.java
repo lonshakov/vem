@@ -1,7 +1,6 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
-import lsa.prototype.vem.model.basic.PersistedObject;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import lsa.prototype.vem.spi.schema.Schema;
@@ -13,7 +12,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HibernateDatatype<T extends PersistedObject> implements Datatype<T> {
+public class HibernateDatatype<T> implements Datatype<T> {
     private final HibernateSchema schema;
     private final ConcurrentHashMap<String, Parameter<T>> primitives = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Parameter<T>> references = new ConcurrentHashMap<>();
@@ -39,15 +38,15 @@ public class HibernateDatatype<T extends PersistedObject> implements Datatype<T>
                     new Accessors.Primitive(entityPersister, name),
                     entityPersister.getPropertyType(name)
             );
-            if (!attribute.isAssociation()) {
+            if (attribute.isAssociation()) {
+                if (attribute.isCollection()) {
+                    collections.put(name, parameter);
+                } else {
+                    references.put(name, parameter);
+                }
+            } else {
                 primitives.put(name, parameter);
-                continue;
             }
-            if (PersistedObject.class.isAssignableFrom(attribute.getJavaType())) {
-                references.put(name, parameter);
-                continue;
-            }
-            collections.put(name, parameter);
         }
 
         identifier = new HibernateParameter<>(

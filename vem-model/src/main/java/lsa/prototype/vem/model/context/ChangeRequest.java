@@ -3,9 +3,17 @@ package lsa.prototype.vem.model.context;
 import jakarta.persistence.*;
 import lsa.prototype.vem.model.basic.Particle;
 import lsa.prototype.vem.model.version.RootEntity;
+import lsa.prototype.vem.request.ChangeState;
+import lsa.prototype.vem.request.IChangeRequest;
+import lsa.prototype.vem.request.Sign;
 
 @MappedSuperclass
-public class ChangeRequest<T extends RootEntity> extends Particle {
+public class ChangeRequest<T extends RootEntity> extends Particle implements IChangeRequest<T> {
+    @AttributeOverrides({
+            @AttributeOverride(name = "type", column = @Column(name = "request_state")),
+            @AttributeOverride(name = "date", column = @Column(name = "request_date"))
+    })
+    @Embedded
     private ChangeState state = new ChangeState(ChangeState.StateType.DRAFT, System.currentTimeMillis());
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;
@@ -13,11 +21,13 @@ public class ChangeRequest<T extends RootEntity> extends Particle {
             @AttributeOverride(name = "user", column = @Column(name = "creation_user")),
             @AttributeOverride(name = "date", column = @Column(name = "creation_date"))
     })
+    @Embedded
     private Sign creationSign;
     @AttributeOverrides({
             @AttributeOverride(name = "user", column = @Column(name = "solution_user")),
             @AttributeOverride(name = "date", column = @Column(name = "solution_date"))
     })
+    @Embedded
     private Sign solutionSing;
 
     public T getRoot() {

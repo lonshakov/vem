@@ -1,30 +1,30 @@
 package lsa.prototype.vem.spi.request;
 
-import lsa.prototype.vem.model.context.ChangeOperation;
-import lsa.prototype.vem.model.context.ChangeRequest;
-import lsa.prototype.vem.model.context.ChangeUnit;
-import lsa.prototype.vem.model.version.LeafEntity;
-import lsa.prototype.vem.model.version.RootEntity;
+import lsa.prototype.vem.model.ILeafEntity;
+import lsa.prototype.vem.model.IRootEntity;
+import lsa.prototype.vem.request.ChangeOperation;
+import lsa.prototype.vem.request.IChangeRequest;
+import lsa.prototype.vem.request.IChangeUnit;
 import lsa.prototype.vem.spi.schema.Datatype;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 public interface Changer {
-    <T extends RootEntity> ChangeRequest<T> createChangeRequest(T entity);
+    <T extends IRootEntity> IChangeRequest<T> createChangeRequest(T entity);
 
-    <T extends RootEntity> ChangeUnit<ChangeRequest<T>> createChangeUnit(
-            ChangeRequest<T> request,
-            LeafEntity<?> leaf,
+    <T extends IRootEntity> IChangeUnit<IChangeRequest<T>> createChangeUnit(
+            IChangeRequest<T> request,
+            ILeafEntity<?> leaf,
             ChangeOperation operation);
 
-    <T extends RootEntity> Datatype<ChangeRequest<T>> getRequestDatatype(T entity);
+    <T extends IRootEntity> Datatype<IChangeRequest<T>> getRequestDatatype(T entity);
 
-    <T extends RootEntity> Datatype<ChangeUnit<ChangeRequest<T>>> getUnitDatatype(T entity);
+    <T extends IRootEntity> Datatype<IChangeUnit<IChangeRequest<T>>> getUnitDatatype(T entity);
 
-    <T extends RootEntity> List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request);
+    <T extends IRootEntity> List<IChangeUnit<IChangeRequest<T>>> getUnits(IChangeRequest<T> request);
 
-    <T extends RootEntity> LeafEntity<?> fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy);
+    <T extends IRootEntity> ILeafEntity<?> fetch(IChangeUnit<IChangeRequest<T>> unit, boolean lazy);
 
-    <T extends RootEntity> Stream<LeafEntity<?>> stream(ChangeRequest<T> request, boolean batch);
+    <T extends IRootEntity> Stream<ILeafEntity<?>> stream(IChangeRequest<T> request, boolean batch);
 }

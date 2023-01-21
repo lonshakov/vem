@@ -1,8 +1,6 @@
 package lsa.prototype.vem.spi.schema;
 
-import lsa.prototype.vem.model.basic.PersistedObject;
-
-public interface Parameter<T extends PersistedObject> {
+public interface Parameter<T> {
     String getName();
 
     Class<?> getType();

@@ -1,17 +1,17 @@
 package lsa.prototype.vem.model.version;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
+import lsa.prototype.vem.model.ILeafEntity;
+import lsa.prototype.vem.model.IVersionedEntity;
 
-import java.util.UUID;
+import java.io.Serializable;
 
 @MappedSuperclass
-public class LeafEntity<P extends VersionedEntity> extends VersionedEntity {
+public class LeafEntity<P extends IVersionedEntity> extends VersionedEntity implements ILeafEntity<P> {
     @ManyToOne
     private P parent;
-    @Column(columnDefinition = "uuid")
-    private UUID parentUuid;
+    private String parentUuid;
 
     public P getParent() {
         return parent;
@@ -21,11 +21,11 @@ public class LeafEntity<P extends VersionedEntity> extends VersionedEntity {
         this.parent = parent;
     }
 
-    public UUID getParentUuid() {
+    public Serializable getParentUuid() {
         return parentUuid;
     }
 
-    public void setParentUuid(UUID parentUuid) {
-        this.parentUuid = parentUuid;
+    public void setParentUuid(Serializable parentUuid) {
+        this.parentUuid = parentUuid.toString();
     }
 }

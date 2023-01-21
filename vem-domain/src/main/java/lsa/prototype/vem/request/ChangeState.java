@@ -1,16 +1,7 @@
-package lsa.prototype.vem.model.context;
+package lsa.prototype.vem.request;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-
-@Embeddable
 public class ChangeState {
-    @Enumerated(EnumType.STRING)
-    @Column(name = "request_state")
     private StateType type = StateType.DRAFT;
-    @Column(name = "request_date")
     private long date;
 
     public ChangeState() {
