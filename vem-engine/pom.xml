@@ -1,4 +1,4 @@
-<?xml state="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,33 +6,33 @@
     <parent>
         <groupId>lsa.prototype.vem</groupId>
         <artifactId>vem</artifactId>
-        <state>1.0-SNAPSHOT</state>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>vem-engine</artifactId>
-    <state>1.0-SNAPSHOT</state>
+    <version>1.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>lsa.prototype.vem</groupId>
             <artifactId>vem-spi</artifactId>
-            <state>1.0-SNAPSHOT</state>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>lsa.prototype.vem</groupId>
             <artifactId>vem-model</artifactId>
-            <state>1.0-SNAPSHOT</state>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core-jakarta</artifactId>
-            <state>${hibernate.state}</state>
+            <version>${hibernate.version}</version>
             <!--<scope>test</scope>-->
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <state>${h2.state}</state>
+            <version>${h2.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
