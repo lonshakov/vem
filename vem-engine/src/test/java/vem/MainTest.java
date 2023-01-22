@@ -6,6 +6,7 @@ import lsa.prototype.vem.engine.impl.request.CRUnitDTO;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Version;
+import lsa.prototype.vem.model.VersionState;
 import lsa.prototype.vem.model.context.ChangeRequestTemplate;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
@@ -133,7 +134,7 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             Parcel box2 = store.getParcels().stream().filter(p -> p.getName().equals("box2")).findFirst().get();
 
-            box2.getVersion().setStateType(Version.StateType.PURGE);
+            vem.getSchema().datatype(box2).primitive("version").set(box2, new Version(VersionState.PURGE, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -178,7 +179,7 @@ public class MainTest {
                     .filter(item -> item.getName().equals("item2"))
                     .findFirst().get();
 
-            item2.getVersion().setStateType(Version.StateType.PURGE);
+            vem.getSchema().datatype(item2).primitive("version").set(item2, new Version(VersionState.PURGE, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -203,7 +204,7 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             StoreBody body = store.getBody();
             body.setAddress("Phuket");
-            body.getVersion().setStateType(Version.StateType.DRAFT);
+            vem.getSchema().datatype(body).primitive("version").set(body, new Version(VersionState.DRAFT, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -268,7 +269,8 @@ public class MainTest {
             store.getParcels().add(new Parcel("sweets"));
 
             ChangeRequest<Store> request = vem.persist(store);
-            request.setUuid(steadyUuid);
+            vem.getSchema().datatype(request).primitive("uuid").set(request, steadyUuid);
+            //request.setUuid(steadyUuid);
             vem.em().persist(request);
         });
         isolator.accept((vem) -> {
@@ -364,4 +366,49 @@ public class MainTest {
 
         Assertions.assertEquals(historyMappings.get(Store.class), historyMappings.get(Parcel.class));
     }
+
+    /*@MappedSuperclass
+    public static class LabEntity extends PersistedObject {
+        private String name;
+
+        public LabEntity(String name) {
+            this.name = name;
+        }
+
+        public LabEntity() {
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    @Entity
+    public static class LabEntityOffspring1 extends LabEntity {
+        public LabEntityOffspring1(String name) {
+            super(name);
+        }
+
+        public LabEntityOffspring1() {
+        }
+    }
+
+    @Entity
+    public static class LabEntityOffspring2 extends LabEntity {
+        public LabEntityOffspring2(String name) {
+            super(name);
+        }
+
+        public LabEntityOffspring2() {
+        }
+    }
+
+    @Test
+    void lab() {
+        VersioningEntityManager vem = database.getVersioningEntityManagerFactory().createEntityManager();
+        LabEntity lab1 = new LabEntityOffspring1("jopa");
+        LabEntity lab2 = new LabEntityOffspring2();
+        vem.getSchema().datatype(lab2).primitive("name").set(lab1, "pizda");
+        System.out.println(lab1.getName());
+    }*/
 }

@@ -3,7 +3,7 @@ package lsa.prototype.vem.engine.impl.session;
 
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Root;
-import lsa.prototype.vem.model.Version;
+import lsa.prototype.vem.model.VersionState;
 import lsa.prototype.vem.model.Versionable;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.util.Set;
 
 public class Persister implements PersistenceProcessor {
-    private final static Set<Version.StateType> CHANGE_STATES = Set.of(Version.StateType.DRAFT, Version.StateType.PURGE);
+    private final static Set<VersionState> CHANGE_STATES = Set.of(VersionState.DRAFT, VersionState.PURGE);
 
     @Override
     public <T extends Root, R extends ChangeRequest<T>, V extends Versionable>
@@ -27,7 +27,7 @@ public class Persister implements PersistenceProcessor {
 
         for (Parameter<V> parameter : datatype.collections().values()) {
             for (Leaf<Versionable> leaf : (Iterable<Leaf<Versionable>>) parameter.get(newEntity)) {
-                leaf.setParentUuid(parentUuid);
+                vem.getSchema().datatype(leaf).primitive("parentUuid").set(leaf, parentUuid);
                 bind(request, leaf, vem);
                 process(leaf, leaf, request, vem);
             }
@@ -41,13 +41,14 @@ public class Persister implements PersistenceProcessor {
             if (leaf == null) {
                 continue;
             }
-            leaf.setParentUuid(parentUuid);
+            //leaf.setParentUuid(parentUuid);
+            vem.getSchema().datatype(leaf).primitive("parentUuid").set(leaf, parentUuid);
             bind(request, leaf, vem);
         }
     }
 
     private <T extends Root> void bind(ChangeRequest<T> request, Leaf<?> leaf, VersioningEntityManager vem) {
-        if (CHANGE_STATES.contains(leaf.getVersion().getStateType())) {
+        if (CHANGE_STATES.contains(leaf.getVersion().getState())) {
             vem.em().persist(leaf);
             ChangeOperation operation = getOperation(leaf);
 
@@ -57,7 +58,7 @@ public class Persister implements PersistenceProcessor {
     }
 
     private ChangeOperation getOperation(Leaf<?> leaf) {
-        return switch (leaf.getVersion().getStateType()) {
+        return switch (leaf.getVersion().getState()) {
             case DRAFT -> (leaf.getId() == (Serializable) 0)
                     ? ChangeOperation.ADD
                     : ChangeOperation.REPLACE;

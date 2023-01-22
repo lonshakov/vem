@@ -99,18 +99,18 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> void publish(ChangeRequest<T> request) {
-        checkRequestBeforeUpdate(request, "publish", ChangeState.StateType.DRAFT);
-        request.getState().setStateType(ChangeState.StateType.PUBLISHED);
+        checkRequestBeforeUpdate(request, "publish", ChangeState.DRAFT);
+        getSchema().datatype(request).primitive("state").set(request, ChangeState.PUBLISHED);
     }
 
     @Override
     public <T extends Root> void affirm(ChangeRequest<T> request) {
-        checkRequestBeforeUpdate(request, "affirm", ChangeState.StateType.PUBLISHED);
+        checkRequestBeforeUpdate(request, "affirm", ChangeState.PUBLISHED);
         long versionDate = System.currentTimeMillis();
 
         T root = request.getRoot();
-        if (root.getVersion().getStateType().equals(Version.StateType.DRAFT)) {
-            request.getRoot().setVersion(Version.StateType.ACTIVE, versionDate);
+        if (root.getVersion().getState().equals(VersionState.DRAFT)) {
+            getSchema().datatype(root).primitive("version").set(root, new Version(VersionState.ACTIVE, 0));
             em.persist(request.getRoot());
         }
 
@@ -123,20 +123,20 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             processParentWiring(versionDate, entity);
         });
 
-        request.setState(new ChangeState(ChangeState.StateType.AFFIRMED, versionDate));
+        getSchema().datatype(request).primitive("state").set(request, ChangeState.AFFIRMED);
         em.persist(request);
     }
 
     @Override
     public <T extends Root> void reject(ChangeRequest<T> request) {
-        checkRequestBeforeUpdate(request, "reject", ChangeState.StateType.PUBLISHED);
-        request.setState(new ChangeState(ChangeState.StateType.REJECTED, System.currentTimeMillis()));
+        checkRequestBeforeUpdate(request, "reject", ChangeState.PUBLISHED);
+        getSchema().datatype(request).primitive("state").set(request, ChangeState.REJECTED);
         em.persist(request);
     }
 
     @Override
     public <T extends Root> void destroy(ChangeRequest<T> request) {
-        checkRequestBeforeUpdate(request, "destroy", ChangeState.StateType.DRAFT);
+        checkRequestBeforeUpdate(request, "destroy", ChangeState.DRAFT);
         getChanger().stream(request, true).forEach(em::remove);
         getChanger().getUnits(request).forEach(em::remove);
         em.remove(request.getRoot());
@@ -189,9 +189,9 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     private static <T extends Root> void checkRequestBeforeUpdate(ChangeRequest<T> request, String methodName,
-                                                                  ChangeState.StateType desiredStateType) {
+                                                                  ChangeState desiredState) {
         Objects.requireNonNull(request);
-        if (!desiredStateType.equals(request.getState().getStateType()))
+        if (!desiredState.equals(request.getState()))
             throw new VersioningException("incorrect request state (" + request.getState() + ") for method " + methodName);
     }
 
@@ -199,8 +199,11 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         specification.getUnits().forEach(u -> {
             em.persist(u.getLeaf());
 
-            if (u.getOperation().equals(ChangeOperation.REMOVE))
-                u.getLeaf().getVersion().setStateType(Version.StateType.PURGE);
+
+            if (u.getOperation().equals(ChangeOperation.REMOVE)) {
+                Datatype<Leaf<?>> datatype = getSchema().datatype(u.getLeaf());
+                datatype.primitive("version").set(u.getLeaf(), new Version(VersionState.PURGE, 0));
+            }
 
             ChangeUnit<ChangeRequest<T>> unit = getChanger().createChangeUnit(
                     request,
@@ -212,40 +215,26 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         return request;
     }
 
-    private void processParentWiring(long versionDate, Versionable entity) {
-        switch (entity.getVersion().getStateType()) {
-            case ACTIVE -> {
-                if (entity instanceof Leaf<?>) {
-                    Leaf<Versionable> orphan = (Leaf<Versionable>) entity;
-                    Versionable parent = em
-                            .createQuery(getActiveParentQuery(orphan))
-                            .getSingleResult();
-                    orphan.setParent(parent);
-                }
-            }
-            case PASSIVE -> {
-                if (entity instanceof Leaf<?>) {
-                    Leaf<Versionable> nonOrphan = (Leaf<Versionable>) entity;
-                    nonOrphan.setParent(null);
-                }
-            }
-        }
+    private <T extends Leaf<P>, P extends Versionable> void processParentWiring(long versionDate, T leaf) {
+        Versionable parent = leaf.getVersion().getState().equals(VersionState.ACTIVE)
+                ? em.createQuery(getActiveParentQuery(leaf)).getSingleResult()
+                : null;
+        getSchema().datatype(leaf).reference("parent").set(leaf, parent);
     }
 
-    private <T extends Versionable> void processHistoryIncrement(T entity, long versionDate) {
-        for (T activeEntity : em.createQuery(getCurrentVersionQuery(entity)).getResultList()) {
-            activeEntity.getVersion().setStateType(
-                    Version.StateType.HISTORY
-            );
-            if (activeEntity instanceof Leaf<?>) {
-                ((Leaf<?>) activeEntity).setParent(null);
-            }
+    private <T extends Leaf<P>, P extends Versionable> void processHistoryIncrement(T leaf, long versionDate) {
+        Datatype<T> datatype = getSchema().datatype(leaf);
+        for (T activeEntity : em.createQuery(getCurrentVersionQuery(leaf)).getResultList()) {
+            datatype.primitive("version").set(activeEntity, new Version(VersionState.HISTORY, 0));
+            datatype.reference("parent").set(activeEntity, null);
             em.persist(activeEntity);
         }
-        switch (entity.getVersion().getStateType()) {
-            case DRAFT -> entity.setVersion(Version.StateType.ACTIVE, versionDate);
-            case PURGE -> entity.setVersion(Version.StateType.PASSIVE, versionDate);
-        }
+        VersionState state = switch (leaf.getVersion().getState()) {
+            case DRAFT -> VersionState.ACTIVE;
+            case PURGE -> VersionState.PASSIVE;
+            default -> throw new VersioningException("incorrect version.state of leaf " + leaf);
+        };
+        datatype.primitive("version").set(leaf, new Version(state, 0));
     }
 
     private <T extends Versionable> CriteriaQuery<T> getCurrentVersionQuery(T entity) {
@@ -257,7 +246,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         query.select(root).where(
                 cb.equal(root.get("uuid"), entity.getUuid()),
-                cb.equal(root.get("version").get("stateType"), Version.StateType.ACTIVE)
+                cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
         );
 
         return query;
@@ -275,7 +264,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         query.select(root).where(
                 cb.equal(root.get("uuid"), entity.getParentUuid()),
-                cb.equal(root.get("version").get("stateType"), Version.StateType.ACTIVE)
+                cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
         );
 
         return query;

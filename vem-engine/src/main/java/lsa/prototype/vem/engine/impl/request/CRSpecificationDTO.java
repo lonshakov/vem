@@ -32,17 +32,8 @@ public class CRSpecificationDTO<T extends Root> implements ChangeRequestSpecific
     }
 
     @Override
-    public void setUuid(Serializable uuid) {
-        this.uuid = uuid;
-    }
-
-    @Override
     public T getRoot() {
         return root;
-    }
-
-    public void setRoot(T root) {
-        this.root = root;
     }
 
     @Override

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml state="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,7 +6,7 @@
 
     <groupId>lsa.prototype.vem</groupId>
     <artifactId>vem</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <state>1.0-SNAPSHOT</state>
     <packaging>pom</packaging>
 
     <modules>
@@ -19,17 +19,17 @@
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
-        <jpa.version>3.1.0</jpa.version>
-        <hibernate.version>5.6.14.Final</hibernate.version>
-        <h2.version>2.1.214</h2.version>
-        <junit.version>5.6.2</junit.version>
+        <jpa.state>3.1.0</jpa.state>
+        <hibernate.state>5.6.14.Final</hibernate.state>
+        <h2.state>2.1.214</h2.state>
+        <junit.state>5.6.2</junit.state>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
+            <state>${junit.state}</state>
             <scope>test</scope>
         </dependency>
     </dependencies>

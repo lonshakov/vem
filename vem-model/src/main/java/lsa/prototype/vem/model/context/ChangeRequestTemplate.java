@@ -9,12 +9,7 @@ import lsa.prototype.vem.request.Sign;
 
 @MappedSuperclass
 public class ChangeRequestTemplate<T extends RootEntity> extends Particle implements ChangeRequest<T> {
-    @AttributeOverrides({
-            @AttributeOverride(name = "type", column = @Column(name = "request_state")),
-            @AttributeOverride(name = "date", column = @Column(name = "request_date"))
-    })
-    @Embedded
-    private ChangeState state = new ChangeState(ChangeState.StateType.DRAFT, System.currentTimeMillis());
+    private ChangeState state = ChangeState.DRAFT;
     @ManyToOne(fetch = FetchType.EAGER)
     private T root;
     @AttributeOverrides({
@@ -30,6 +25,7 @@ public class ChangeRequestTemplate<T extends RootEntity> extends Particle implem
     @Embedded
     private Sign solutionSing;
 
+
     public T getRoot() {
         return root;
     }
@@ -40,14 +36,6 @@ public class ChangeRequestTemplate<T extends RootEntity> extends Particle implem
 
     public ChangeState getState() {
         return state;
-    }
-
-    public void setState(ChangeState state) {
-        this.state = state;
-    }
-
-    public void setState(ChangeState.StateType type, long date) {
-        this.state = new ChangeState(type, date);
     }
 
     public Sign getCreationSign() {
