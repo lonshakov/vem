@@ -7,6 +7,7 @@ import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Version;
 import lsa.prototype.vem.model.VersionState;
+import lsa.prototype.vem.model.Versionable;
 import lsa.prototype.vem.model.context.ChangeRequestTemplate;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
@@ -134,7 +135,7 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             Parcel box2 = store.getParcels().stream().filter(p -> p.getName().equals("box2")).findFirst().get();
 
-            vem.getSchema().datatype(box2).primitive("version").set(box2, new Version(VersionState.PURGE, 0));
+            setVersion(vem, box2, new Version(VersionState.PURGE, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -179,7 +180,7 @@ public class MainTest {
                     .filter(item -> item.getName().equals("item2"))
                     .findFirst().get();
 
-            vem.getSchema().datatype(item2).primitive("version").set(item2, new Version(VersionState.PURGE, 0));
+            setVersion(vem, item2, new Version(VersionState.PURGE, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -204,7 +205,8 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             StoreBody body = store.getBody();
             body.setAddress("Phuket");
-            vem.getSchema().datatype(body).primitive("version").set(body, new Version(VersionState.DRAFT, 0));
+
+            setVersion(vem, body, new Version(VersionState.DRAFT, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -365,5 +367,9 @@ public class MainTest {
         HistoryMappings historyMappings = new HistoryMappings(schema);
 
         Assertions.assertEquals(historyMappings.get(Store.class), historyMappings.get(Parcel.class));
+    }
+
+    private static void setVersion(VersioningEntityManager vem, Versionable versionable, Version version) {
+        vem.getSchema().datatype(versionable).primitive("version").set(versionable, version);
     }
 }
