@@ -6,6 +6,8 @@ import lsa.prototype.vem.model.VersionState;
 import lsa.prototype.vem.model.Versionable;
 import lsa.prototype.vem.model.basic.Particle;
 
+import java.io.Serializable;
+
 @MappedSuperclass
 public class VersionedEntity extends Particle implements Versionable {
     @Embedded
@@ -14,8 +16,14 @@ public class VersionedEntity extends Particle implements Versionable {
             @AttributeOverride(name = "date", column = @Column(name = "version_date"))
     })
     private Version version = new Version(VersionState.DRAFT, 0);
+    private long partition;
 
     public Version getVersion() {
         return version;
+    }
+
+    @Override
+    public Serializable getPartition() {
+        return partition;
     }
 }
