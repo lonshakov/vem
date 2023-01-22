@@ -366,49 +366,4 @@ public class MainTest {
 
         Assertions.assertEquals(historyMappings.get(Store.class), historyMappings.get(Parcel.class));
     }
-
-    /*@MappedSuperclass
-    public static class LabEntity extends PersistedObject {
-        private String name;
-
-        public LabEntity(String name) {
-            this.name = name;
-        }
-
-        public LabEntity() {
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    @Entity
-    public static class LabEntityOffspring1 extends LabEntity {
-        public LabEntityOffspring1(String name) {
-            super(name);
-        }
-
-        public LabEntityOffspring1() {
-        }
-    }
-
-    @Entity
-    public static class LabEntityOffspring2 extends LabEntity {
-        public LabEntityOffspring2(String name) {
-            super(name);
-        }
-
-        public LabEntityOffspring2() {
-        }
-    }
-
-    @Test
-    void lab() {
-        VersioningEntityManager vem = database.getVersioningEntityManagerFactory().createEntityManager();
-        LabEntity lab1 = new LabEntityOffspring1("jopa");
-        LabEntity lab2 = new LabEntityOffspring2();
-        vem.getSchema().datatype(lab2).primitive("name").set(lab1, "pizda");
-        System.out.println(lab1.getName());
-    }*/
 }
