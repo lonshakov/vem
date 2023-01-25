@@ -4,6 +4,7 @@ import jakarta.persistence.metamodel.Attribute;
 import lsa.prototype.vem.spi.schema.Accessor;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
+import org.hibernate.metamodel.model.domain.internal.AbstractPluralAttribute;
 import org.hibernate.type.Type;
 
 public class HibernateParameter<T> implements Parameter<T> {
@@ -25,15 +26,27 @@ public class HibernateParameter<T> implements Parameter<T> {
     }
 
     @Override
-    public Class<?> getType() {
+    public Class<?> getJavaType() {
+        //there's bug in hibernate attribute (only hibernateType works right)
+        //don't change it
         return hibernateType.getReturnedClass();
     }
 
     @Override
+    public Class<?> getGraphType() {
+        if (!attribute.isAssociation())
+            return null;
+        return attribute.isCollection()
+                ? ((AbstractPluralAttribute) attribute).getValueGraphType().getJavaType()
+                : getJavaType();
+    }
+
+    @Override
     public Datatype<?> getParameterDatatype() {
-        return !isPrimitive()
-                ? structure.getSchema().datatype(getType())
-                : null;
+        Class<?> type = getGraphType();
+        return type == null
+                ? null
+                : structure.getSchema().datatype(type);
     }
 
     @Override
@@ -43,12 +56,12 @@ public class HibernateParameter<T> implements Parameter<T> {
 
     @Override
     public boolean isCollection() {
-        return attribute.isCollection();
+        return attribute.isAssociation() && attribute.isCollection();
     }
 
     @Override
     public boolean isReference() {
-        return attribute.isAssociation();
+        return attribute.isAssociation() && !attribute.isCollection();
     }
 
     @Override
@@ -71,11 +84,11 @@ public class HibernateParameter<T> implements Parameter<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         HibernateParameter<?> that = (HibernateParameter<?>) o;
-        return hibernateType.equals(that.hibernateType);
+        return attribute.equals(that.attribute);
     }
 
     @Override
     public int hashCode() {
-        return hibernateType.hashCode();
+        return attribute.hashCode();
     }
 }

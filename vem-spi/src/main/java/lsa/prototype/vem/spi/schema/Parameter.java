@@ -3,7 +3,9 @@ package lsa.prototype.vem.spi.schema;
 public interface Parameter<T> {
     String getName();
 
-    Class<?> getType();
+    Class<?> getJavaType();
+
+    Class<?> getGraphType();
 
     Datatype<?> getParameterDatatype();
 

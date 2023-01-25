@@ -22,9 +22,9 @@ public interface Changer {
 
     <T extends Root> Datatype<ChangeUnit<ChangeRequest<T>>> getUnitDatatype(T entity);
 
-    <T extends Root> List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request);
+    <T extends Root> List<ChangeUnit<ChangeRequest<T>>> getStoredChangeUnits(ChangeRequest<T> request);
 
-    <T extends Root> Leaf<?> fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy);
+    <T extends Root> ChangeRequestSpecification.Unit fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy);
 
-    <T extends Root> Stream<Leaf<?>> stream(ChangeRequest<T> request, boolean batch);
+    <T extends Root> Stream<ChangeRequestSpecification.Unit> stream(ChangeRequest<T> request, boolean lazy);
 }

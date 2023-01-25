@@ -1,6 +1,7 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
+import lsa.prototype.vem.engine.impl.lab.Cloner;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import lsa.prototype.vem.spi.schema.Schema;
@@ -60,6 +61,11 @@ public class HibernateDatatype<T> implements Datatype<T> {
     @Override
     public T instantiate() {
         return (T) entityPersister.getEntityTuplizer().instantiate();
+    }
+
+    @Override
+    public T clone(T entity) {
+        return new Cloner().clone(entity, getSchema());
     }
 
     @Override

@@ -2,14 +2,16 @@ package lsa.prototype.vem.spi.session;
 
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.model.GlobalEntity;
+import lsa.prototype.vem.model.Persistable;
 import lsa.prototype.vem.model.Root;
 import lsa.prototype.vem.request.ChangeRequest;
-import lsa.prototype.vem.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
 
 import java.io.Serializable;
+import java.util.function.BiConsumer;
 
 public interface VersioningEntityManager extends AutoCloseable {
     <T extends Root> ChangeRequest<T> persist(T entity);
@@ -33,6 +35,8 @@ public interface VersioningEntityManager extends AutoCloseable {
     <T extends Root> void destroy(ChangeRequestSpecification<T> specification);
 
     <T extends GlobalEntity> T find(Class<T> type, Serializable uuid);
+
+    <T extends Persistable> void walk(T entity, BiConsumer<Persistable, WalkContext> task);
 
     EntityManager em();
 

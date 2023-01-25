@@ -5,6 +5,8 @@ import java.util.Map;
 public interface Datatype<T> {
     T instantiate();
 
+    T clone(T entity);
+
     Parameter<T> identifier();
 
     Parameter<T> primitive(String name);

@@ -1,6 +1,5 @@
 package lsa.prototype.vem.spi.schema;
 
-
 public interface Schema extends Iterable<Datatype<?>> {
     <T> Datatype<T> datatype(Class<T> type);
 

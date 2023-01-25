@@ -1,7 +1,7 @@
 package lsa.prototype.vem.engine.impl.request;
 
 import lsa.prototype.vem.model.Root;
-import lsa.prototype.vem.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 
 import java.io.Serializable;
 import java.util.HashSet;

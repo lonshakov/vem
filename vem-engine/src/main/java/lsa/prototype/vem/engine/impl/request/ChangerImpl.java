@@ -9,6 +9,7 @@ import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.request.ChangeUnit;
 import lsa.prototype.vem.request.PolymorphEntity;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMapping;
@@ -59,7 +60,32 @@ public class ChangerImpl implements Changer {
     }
 
     @Override
-    public <T extends Root> List<ChangeUnit<ChangeRequest<T>>> getUnits(ChangeRequest<T> request) {
+    public <T extends Root> ChangeRequestSpecification.Unit fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy) {
+        EntityManager em = vem.em();
+        Class<Leaf<?>> type = (Class<Leaf<?>>) unit.getLeaf().getType();
+
+        Serializable id = unit.getLeaf().getId();
+        Leaf<?> leaf = lazy ? em.getReference(type, id) : em.find(type, id);
+
+        return new CRUnitDTO(unit.getOperation(), leaf);
+    }
+
+    @Override
+    public <T extends Root> Stream<ChangeRequestSpecification.Unit> stream(ChangeRequest<T> request, boolean lazy) {
+        List<ChangeUnit<ChangeRequest<T>>> units = getStoredChangeUnits(request);
+
+        Iterator<ChangeRequestSpecification.Unit> iterator = lazy
+                ? units.stream().map(u -> fetch(u, true)).iterator()
+                : new BatchUnitIterator(units, vem.em());
+
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
+                false
+        );
+    }
+
+    @Override
+    public <T extends Root> List<ChangeUnit<ChangeRequest<T>>> getStoredChangeUnits(ChangeRequest<T> request) {
         Class<ChangeUnit<ChangeRequest<T>>> type = getUnitDatatype(request.getRoot()).getJavaType();
         CriteriaBuilder cb = vem.em().getCriteriaBuilder();
 
@@ -71,30 +97,5 @@ public class ChangerImpl implements Changer {
                 .where(cb.equal(root.get("request"), request));
 
         return vem.em().createQuery(query).getResultList();
-    }
-
-    @Override
-    public <T extends Root> Leaf<?> fetch(ChangeUnit<ChangeRequest<T>> unit, boolean lazy) {
-        EntityManager em = vem.em();
-        Class<Leaf<?>> type = (Class<Leaf<?>>) unit.getLeaf().getType();
-        Serializable id = unit.getLeaf().getId();
-
-        return lazy ? em.getReference(type, id) : em.find(type, id);
-    }
-
-    @Override
-    public <T extends Root> Stream<Leaf<?>> stream(ChangeRequest<T> request, boolean batch) {
-        if (!batch) {
-            return getUnits(request).stream().map(u -> fetch(u, true));
-        }
-        Iterator<Leaf<?>> iterator = new BatchIterator(
-                request,
-                vem.getChanger(),
-                vem.em()
-        );
-        return StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
-                false
-        );
     }
 }

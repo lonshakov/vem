@@ -2,7 +2,7 @@ package lsa.prototype.vem.engine.impl.request;
 
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 
 public class CRUnitDTO implements ChangeRequestSpecification.Unit {
     private ChangeOperation operation;

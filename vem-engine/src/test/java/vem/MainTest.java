@@ -3,20 +3,16 @@ package vem;
 import jakarta.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.request.CRSpecificationDTO;
 import lsa.prototype.vem.engine.impl.request.CRUnitDTO;
-import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.model.Leaf;
-import lsa.prototype.vem.model.Version;
-import lsa.prototype.vem.model.VersionState;
-import lsa.prototype.vem.model.Versionable;
 import lsa.prototype.vem.model.context.ChangeRequestTemplate;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
-import lsa.prototype.vem.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
-import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.internal.SessionImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vem.context.StoreChangeRequest;
@@ -62,13 +58,14 @@ public class MainTest {
             ChangeRequest<Store> request = vem.persist(store);
             vem.publish(request);
             vem.affirm(request);
+            System.out.println();
         });
         isolator.accept((vem) -> {
             StoreChangeRequest request = vem.em()
                     .createQuery("select c from StoreChangeRequest c where c.root.name = 'Macy''s'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            Assertions.assertEquals(3, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(3, vem.getChanger().stream(request, true).count());
 
             Store store = vem.em()
                     .createQuery("select s from Store s where s.name = 'Macy''s'", Store.class)
@@ -102,7 +99,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(3, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(3, vem.getChanger().stream(request, true).count());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -122,7 +119,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -135,13 +132,14 @@ public class MainTest {
             Store store = selectX5.apply(vem);
             Parcel box2 = store.getParcels().stream().filter(p -> p.getName().equals("box2")).findFirst().get();
 
-            setVersion(vem, box2, new Version(VersionState.PURGE, 0));
+            store.getParcels().remove(box2);
+            //setVersion(vem, box2, new Version(VersionState.PURGE, 0));
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -164,7 +162,7 @@ public class MainTest {
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -175,18 +173,18 @@ public class MainTest {
         //merge (remove leaf level 2)
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
-            Item item2 = store.getParcels().get(0)
-                    .getItems().stream()
-                    .filter(item -> item.getName().equals("item2"))
-                    .findFirst().get();
+            Parcel parcel = store.getParcels().get(0);
 
-            setVersion(vem, item2, new Version(VersionState.PURGE, 0));
+            Item item = parcel.getItems().stream().filter(o -> o.getName().equals("item2")).findFirst().get();
+
+            //try to remove an item
+            parcel.getItems().remove(item);
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
         });
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
@@ -202,21 +200,21 @@ public class MainTest {
         });
         //merge (update body)
         isolator.accept((vem) -> {
+            SessionImpl session = vem.em().unwrap(SessionImpl.class);
+
             Store store = selectX5.apply(vem);
             StoreBody body = store.getBody();
-            body.setAddress("Phuket");
 
-            setVersion(vem, body, new Version(VersionState.DRAFT, 0));
+            store.setBody(new StoreBody("Phuket"));
+
+            //vem.em().detach(store);
+            //session.contains();
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
             vem.affirm(request);
 
-            Assertions.assertEquals(1, vem.getChanger().getUnits(request).size());
-        });
-        isolator.accept((vem) -> {
-            Store store = selectX5.apply(vem);
-            System.out.println();
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
         });
     }
 
@@ -244,7 +242,7 @@ public class MainTest {
                     .createQuery("select r from StoreChangeRequest r where r.root.name = 'drugs'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            Assertions.assertEquals(2, vem.getChanger().getUnits(request).size());
+            Assertions.assertEquals(2, vem.getChanger().stream(request, true).count());
         });
     }
 
@@ -331,6 +329,7 @@ public class MainTest {
             StoreChangeUnit unit = new StoreChangeUnit();
             unit.setRequest(request);
             unit.setLeaf(parcel);
+            unit.setOperation(ChangeOperation.ADD);
             vem.em().persist(unit);
         });
         isolator.accept((vem) -> {
@@ -338,7 +337,7 @@ public class MainTest {
                     .createQuery("select r from StoreChangeRequest r where r.root.name = 'ozon'", StoreChangeRequest.class)
                     .getSingleResult();
 
-            Leaf<?> queriedLeaf = vem.getChanger().stream(queriedRequest, false).findFirst().get();
+            Leaf<?> queriedLeaf = vem.getChanger().stream(queriedRequest, false).findFirst().get().getLeaf();
 
             Assertions.assertEquals("ozon", queriedRequest.getRoot().getName());
             Assertions.assertEquals("notebook", ((Parcel) queriedLeaf).getName());
@@ -347,8 +346,7 @@ public class MainTest {
 
     @Test
     void testMetadataCreation() {
-        Schema schema = new HibernateSchema(database.getEntityManagerFactory().unwrap(SessionFactoryImpl.class).getMetamodel());
-
+        Schema schema = database.getVersioningEntityManagerFactory().getSchema();
         Datatype<Store> datatype = schema.datatype(Store.class);
 
         Store store = new Store();
@@ -369,7 +367,64 @@ public class MainTest {
         Assertions.assertEquals(historyMappings.get(Store.class), historyMappings.get(Parcel.class));
     }
 
-    private static void setVersion(VersioningEntityManager vem, Versionable versionable, Version version) {
-        vem.getSchema().datatype(versionable).primitive("version").set(versionable, version);
+    @Test
+    void testParameterDatatype() {
+        Datatype<Parcel> datatype = database.getVersioningEntityManagerFactory().getSchema().datatype(Parcel.class);
+
+        Assertions.assertEquals(
+                Item.class,
+                datatype.collection("items").getParameterDatatype().getJavaType()
+        );
+        Assertions.assertEquals(
+                Store.class,
+                datatype.reference("parent").getParameterDatatype().getJavaType()
+        );
+        Assertions.assertNull(datatype.primitive("name").getParameterDatatype());
+    }
+
+    //@Test
+    void testLab() {
+        Function<VersioningEntityManager, Store> selectX5 = vem -> vem.em()
+                .createQuery("select s from Store s where s.name = 'x5'", Store.class)
+                .getSingleResult();
+
+        //persist (initial)
+        isolator.accept((vem) -> {
+            Store store = new Store("x5");
+            store.setBody(new StoreBody("Bali"));
+
+            Parcel parcel = new Parcel("box1");
+            parcel.getItems().add(new Item("item1"));
+
+            store.getParcels().add(parcel);
+
+            ChangeRequest<Store> request = vem.persist(store);
+            vem.publish(request);
+            vem.affirm(request);
+
+            Assertions.assertEquals(3, vem.getChanger().stream(request, true).count());
+        });
+        isolator.accept((vem) -> {
+            Store store = selectX5.apply(vem);
+
+            Assertions.assertEquals(1, store.getParcels().size());
+
+            Assertions.assertEquals(1, store.getParcels().get(0).getItems().size());
+        });
+
+        isolator.accept((vem) -> {
+            SessionImpl session = vem.em().unwrap(SessionImpl.class);
+
+            Store store = selectX5.apply(vem);
+
+            StoreBody newBody = new StoreBody("Phuket");
+            store.setBody(newBody);
+
+            ChangeRequest<Store> request = vem.merge(store);
+            vem.publish(request);
+            vem.affirm(request);
+
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
+        });
     }
 }

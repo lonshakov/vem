@@ -7,5 +7,5 @@ import lsa.prototype.vem.request.ChangeRequest;
 
 @FunctionalInterface
 public interface PersistenceProcessor {
-    <T extends Root, R extends ChangeRequest<T>, V extends Versionable> void process(V oldEntity, V newEntity, R request, VersioningEntityManager vem);
+    <T extends Root, R extends ChangeRequest<T>, V extends Versionable> void process(V entity, R request, VersioningEntityManager vem);
 }
