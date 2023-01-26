@@ -1,8 +1,8 @@
 package lsa.prototype.vem.engine.impl.session;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import lsa.prototype.vem.engine.impl.crs.CRSpecificationBuilderCascade;
 import lsa.prototype.vem.engine.impl.crs.CRSpecificationBuilderMerge;
 import lsa.prototype.vem.engine.impl.function.Util;
@@ -162,7 +162,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> query = cb.createQuery(type);
-        jakarta.persistence.criteria.Root<T> root = query.from(type);
+        javax.persistence.criteria.Root<T> root = query.from(type);
         query.select(root).where(cb.equal(root.get("uuid"), uuid));
         List<T> result = em.createQuery(query).getResultList();
 
@@ -233,7 +233,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         Class<T> type = (Class<T>) leaf.getClass();
 
         CriteriaQuery<T> query = cb.createQuery(type);
-        jakarta.persistence.criteria.Root<T> root = query.from(type);
+        javax.persistence.criteria.Root<T> root = query.from(type);
 
         //set history state
         switch (operation) {
@@ -279,7 +279,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         Class<P> type = (Class<P>) parent.getParameterDatatype().getJavaType();
 
         CriteriaQuery<P> query = cb.createQuery(type);
-        jakarta.persistence.criteria.Root<P> root = query.from(type);
+        javax.persistence.criteria.Root<P> root = query.from(type);
 
         query.select(root).where(
                 cb.equal(root.get("uuid"), entity.getParentUuid()),

@@ -1,6 +1,6 @@
 package lsa.prototype.vem.engine.impl.schema;
 
-import jakarta.persistence.metamodel.Attribute;
+import javax.persistence.metamodel.Attribute;
 import lsa.prototype.vem.spi.schema.Accessor;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;

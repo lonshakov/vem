@@ -1,6 +1,6 @@
 package vem.basemodel.request;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.request.ChangeState;
 import lsa.prototype.vem.request.Sign;

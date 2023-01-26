@@ -1,6 +1,6 @@
 package vem.basemodel.version;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lsa.prototype.vem.model.Version;
 import lsa.prototype.vem.model.VersionState;
 import lsa.prototype.vem.model.Versionable;

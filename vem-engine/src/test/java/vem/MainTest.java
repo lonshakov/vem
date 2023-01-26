@@ -1,6 +1,6 @@
 package vem;
 
-import jakarta.persistence.EntityManager;
+import javax.persistence.EntityManager;
 import lsa.prototype.vem.engine.impl.crs.CRSpecificationDTO;
 import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import lsa.prototype.vem.model.Leaf;

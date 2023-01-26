@@ -1,8 +1,8 @@
 package lsa.prototype.vem.engine.impl.request;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Root;
@@ -92,7 +92,7 @@ public class ChangerImpl implements Changer {
 
         CriteriaQuery<ChangeUnit<ChangeRequest<T>>> query =
                 cb.createQuery(type);
-        jakarta.persistence.criteria.Root<ChangeUnit<ChangeRequest<T>>> root =
+        javax.persistence.criteria.Root<ChangeUnit<ChangeRequest<T>>> root =
                 query.from(type);
         query.select(root)
                 .where(cb.equal(root.get("request"), request));

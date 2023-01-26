@@ -1,8 +1,8 @@
 package lsa.prototype.vem.engine.impl.request;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Persistable;
@@ -65,7 +65,7 @@ public class BatchUnitIterator implements Iterator<ChangeRequestSpecification.Un
     private List<Leaf<?>> fetchBatch(Class<Leaf<?>> type, Set<Serializable> identifiers) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Leaf<?>> query = cb.createQuery(type);
-        jakarta.persistence.criteria.Root<Leaf<?>> root = query.from(type);
+        javax.persistence.criteria.Root<Leaf<?>> root = query.from(type);
         query.select(root)
                 .where(root.get("id").in(identifiers));
         return em.createQuery(query).getResultList();

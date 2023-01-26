@@ -1,6 +1,6 @@
 package vem.basemodel.basic;
 
-import jakarta.persistence.MappedSuperclass;
+import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
 public class Dictionary extends PersistedObject {

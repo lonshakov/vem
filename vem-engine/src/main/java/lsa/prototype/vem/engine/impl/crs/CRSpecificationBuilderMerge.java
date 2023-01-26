@@ -1,8 +1,8 @@
 package lsa.prototype.vem.engine.impl.crs;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import lsa.prototype.vem.model.*;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
@@ -156,7 +156,7 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
     <T extends Versionable> List<T> fetchByParent(EntityManager em, Class<T> type, Versionable parent) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> query = cb.createQuery(type);
-        jakarta.persistence.criteria.Root<T> root = query.from(type);
+        javax.persistence.criteria.Root<T> root = query.from(type);
         query.select(root).where(
                 cb.equal(root.get("parentUuid"), parent.getUuid()),
                 cb.equal(root.get("version").get("state"), VersionState.ACTIVE));

@@ -1,6 +1,6 @@
 package lsa.prototype.vem.engine.impl.schema;
 
-import jakarta.persistence.metamodel.EntityType;
+import javax.persistence.metamodel.EntityType;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Schema;
 import org.hibernate.metamodel.spi.MetamodelImplementor;

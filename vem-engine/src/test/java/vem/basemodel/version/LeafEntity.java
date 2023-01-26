@@ -1,7 +1,7 @@
 package vem.basemodel.version;
 
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MappedSuperclass;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Versionable;
 

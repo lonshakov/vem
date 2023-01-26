@@ -1,6 +1,6 @@
 package vem.basemodel.request;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeUnit;
 import lsa.prototype.vem.request.PolymorphEntity;

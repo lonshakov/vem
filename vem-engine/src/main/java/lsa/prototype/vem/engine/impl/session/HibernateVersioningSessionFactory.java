@@ -1,6 +1,6 @@
 package lsa.prototype.vem.engine.impl.session;
 
-import jakarta.persistence.EntityManagerFactory;
+import javax.persistence.EntityManagerFactory;
 import lsa.prototype.vem.engine.impl.function.Persister;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
 import lsa.prototype.vem.spi.function.PersistenceProcessor;

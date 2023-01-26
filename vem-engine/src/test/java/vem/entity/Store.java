@@ -1,8 +1,8 @@
 package vem.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import vem.basemodel.version.RootEntity;
 
 import java.util.ArrayList;

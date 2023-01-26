@@ -1,6 +1,6 @@
 package vem.entity;
 
-import jakarta.persistence.Entity;
+import javax.persistence.Entity;
 import vem.basemodel.version.LeafEntity;
 
 @Entity

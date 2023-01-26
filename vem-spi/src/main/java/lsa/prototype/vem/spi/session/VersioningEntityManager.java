@@ -1,6 +1,6 @@
 package lsa.prototype.vem.spi.session;
 
-import jakarta.persistence.EntityManager;
+import javax.persistence.EntityManager;
 import lsa.prototype.vem.model.GlobalEntity;
 import lsa.prototype.vem.model.Persistable;
 import lsa.prototype.vem.model.Root;
