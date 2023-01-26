@@ -1,7 +1,7 @@
 package vem.entity;
 
 import jakarta.persistence.Entity;
-import lsa.prototype.vem.model.version.LeafEntity;
+import vem.basemodel.version.LeafEntity;
 
 @Entity
 public class Item extends LeafEntity<Parcel> {

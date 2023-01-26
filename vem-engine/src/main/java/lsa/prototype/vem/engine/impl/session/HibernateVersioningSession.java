@@ -3,9 +3,9 @@ package lsa.prototype.vem.engine.impl.session;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import lsa.prototype.vem.engine.impl.lab.CRSCascadeOperationBuilder;
-import lsa.prototype.vem.engine.impl.lab.CRSMergeBuilder;
-import lsa.prototype.vem.engine.impl.lab.CRSUtil;
+import lsa.prototype.vem.engine.impl.crs.CRSpecificationBuilderCascade;
+import lsa.prototype.vem.engine.impl.crs.CRSpecificationBuilderMerge;
+import lsa.prototype.vem.engine.impl.function.Util;
 import lsa.prototype.vem.engine.impl.request.ChangerImpl;
 import lsa.prototype.vem.model.*;
 import lsa.prototype.vem.request.ChangeOperation;
@@ -13,14 +13,14 @@ import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.request.ChangeState;
 import lsa.prototype.vem.request.ChangeUnit;
 import lsa.prototype.vem.spi.VersioningException;
+import lsa.prototype.vem.spi.function.PersistenceProcessor;
+import lsa.prototype.vem.spi.function.VisitorContext;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
-import lsa.prototype.vem.spi.session.PersistenceProcessor;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.session.VersioningEntityManagerFactory;
-import lsa.prototype.vem.spi.session.WalkContext;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -44,17 +44,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> ChangeRequest<T> persist(T entity) {
-        /*Objects.requireNonNull(entity);
-
-        ChangeRequest<T> request = getChanger().createChangeRequest(entity);
-
-        em.persist(request);
-        em.persist(entity);
-
-        processors.get("entity-persist").process(entity, request, this);
-
-        return request;*/
-        ChangeRequestSpecification<T> crs = new CRSCascadeOperationBuilder(ChangeOperation.ADD)
+        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderCascade(ChangeOperation.GRAPH_CREATE)
                 .build(entity, this);
 
         return persist(crs);
@@ -77,16 +67,9 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> ChangeRequest<T> merge(T entity) {
-        /*Objects.requireNonNull(entity);
-        T storedEntity = findNonNull((Class<T>) entity.getClass(), entity.getUuid());//todo
-
-        ChangeRequest<T> request = getChanger().createChangeRequest(storedEntity);
-        em.persist(request);
-
-        processors.get("entity-merge").process(entity, request, this);*/
         T clone = getSchema().datatype(entity).clone(entity);
-        walk(entity, (obj, ctx) -> em().detach(obj));
-        ChangeRequestSpecification<T> crs = new CRSMergeBuilder().build(clone, this);
+        cascade(entity, (obj, ctx) -> em().detach(obj));
+        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderMerge().build(clone, this);
 
         return merge(crs);
     }
@@ -191,9 +174,9 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Persistable> void walk(T entity, BiConsumer<Persistable, WalkContext> task) {
-        CRSUtil.WalkContextImpl ctx = new CRSUtil.WalkContextImpl(this);
-        CRSUtil.walk(entity, ctx, task);
+    public <T extends Persistable> void cascade(T entity, BiConsumer<Persistable, VisitorContext> task) {
+        Util.VisitorContextImpl ctx = new Util.VisitorContextImpl(this);
+        Util.walk(entity, ctx, task);
     }
 
     @Override
@@ -245,32 +228,47 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     private <T extends Leaf<P>, P extends Versionable> void processHistoryIncrement(ChangeOperation operation, T leaf, long versionDate) {
         Datatype<T> datatype = getSchema().datatype(leaf);
-        for (T activeEntity : em.createQuery(getCurrentVersionQuery(leaf)).getResultList()) {
-            datatype.primitive("version").set(activeEntity, new Version(VersionState.HISTORY, 0));
-            datatype.reference("parent").set(activeEntity, null);
-            em.persist(activeEntity);
-        }
-        VersionState state = switch (operation) {
-            case ADD, REPLACE -> VersionState.ACTIVE;
-            case REMOVE -> VersionState.PASSIVE;
-            default -> throw new VersioningException("incorrect version.state of leaf " + leaf);
-        };
-        datatype.primitive("version").set(leaf, new Version(state, 0));
-    }
 
-    private <T extends Versionable> CriteriaQuery<T> getCurrentVersionQuery(T entity) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        Class<T> type = (Class<T>) entity.getClass();
+        Class<T> type = (Class<T>) leaf.getClass();
 
         CriteriaQuery<T> query = cb.createQuery(type);
         jakarta.persistence.criteria.Root<T> root = query.from(type);
 
-        query.select(root).where(
-                cb.equal(root.get("uuid"), entity.getUuid()),
-                cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
-        );
-
-        return query;
+        //set history state
+        switch (operation) {
+            case COLLECTION_REMOVE -> {
+                query.select(root).where(
+                        cb.equal(root.get("uuid"), leaf.getUuid()),
+                        cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
+                );
+                em.createQuery(query).getResultList().forEach(active -> {
+                    datatype.primitive("version").set(active, new Version(VersionState.HISTORY, 0));
+                    datatype.reference("parent").set(active, null);
+                    em.persist(active);
+                });
+            }
+            case COLLECTION_ADD, GRAPH_CREATE -> {
+                //NOOP
+            }
+            case REFERENCE_REPLACE, REFERENCE_NULLIFY -> {
+                query.select(root).where(
+                        cb.equal(root.get("parentUuid"), leaf.getParentUuid()),
+                        cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
+                );
+                em.createQuery(query).getResultList().forEach(active -> {
+                    datatype.primitive("version").set(active, new Version(VersionState.HISTORY, 0));
+                    datatype.reference("parent").set(active, null);
+                    em.persist(active);
+                });
+            }
+        }
+        //set active/passive state
+        VersionState state = switch (operation) {
+            case COLLECTION_ADD, REFERENCE_REPLACE, GRAPH_CREATE -> VersionState.ACTIVE;
+            case COLLECTION_REMOVE, REFERENCE_NULLIFY -> VersionState.PASSIVE;
+        };
+        datatype.primitive("version").set(leaf, new Version(state, 0));
     }
 
     private <T extends Leaf<P>, P extends Versionable> CriteriaQuery<P> getActiveParentQuery(T entity) {

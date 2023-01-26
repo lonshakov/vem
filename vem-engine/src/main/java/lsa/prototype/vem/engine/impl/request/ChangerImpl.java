@@ -3,6 +3,7 @@ package lsa.prototype.vem.engine.impl.request;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Root;
 import lsa.prototype.vem.request.ChangeOperation;
@@ -67,7 +68,7 @@ public class ChangerImpl implements Changer {
         Serializable id = unit.getLeaf().getId();
         Leaf<?> leaf = lazy ? em.getReference(type, id) : em.find(type, id);
 
-        return new CRUnitDTO(unit.getOperation(), leaf);
+        return new CRSpecificationUnitDTO(unit.getOperation(), leaf);
     }
 
     @Override

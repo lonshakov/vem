@@ -1,10 +1,11 @@
 package lsa.prototype.vem.engine.impl.session;
 
 import jakarta.persistence.EntityManagerFactory;
+import lsa.prototype.vem.engine.impl.function.Persister;
 import lsa.prototype.vem.engine.impl.schema.HibernateSchema;
+import lsa.prototype.vem.spi.function.PersistenceProcessor;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
-import lsa.prototype.vem.spi.session.PersistenceProcessor;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
 import lsa.prototype.vem.spi.session.VersioningEntityManagerFactory;
 import org.hibernate.internal.SessionFactoryImpl;

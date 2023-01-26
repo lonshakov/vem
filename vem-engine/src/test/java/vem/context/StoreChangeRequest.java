@@ -1,7 +1,7 @@
 package vem.context;
 
 import jakarta.persistence.Entity;
-import lsa.prototype.vem.model.context.ChangeRequestTemplate;
+import vem.basemodel.request.ChangeRequestTemplate;
 import vem.entity.Store;
 
 @Entity

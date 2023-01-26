@@ -1,7 +1,7 @@
 package lsa.prototype.vem.engine.impl.schema;
 
 import jakarta.persistence.metamodel.Attribute;
-import lsa.prototype.vem.engine.impl.lab.Cloner;
+import lsa.prototype.vem.engine.impl.function.Cloner;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import lsa.prototype.vem.spi.schema.Schema;

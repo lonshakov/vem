@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.impl.session;
+package lsa.prototype.vem.engine.impl.function;
 
 
 import lsa.prototype.vem.model.Leaf;
@@ -8,9 +8,9 @@ import lsa.prototype.vem.model.Versionable;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.request.ChangeUnit;
+import lsa.prototype.vem.spi.function.PersistenceProcessor;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
-import lsa.prototype.vem.spi.session.PersistenceProcessor;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
 
 import java.io.Serializable;
@@ -56,11 +56,11 @@ public class Persister implements PersistenceProcessor {
 
     private ChangeOperation getOperation(Leaf<?> leaf) {
         if (leaf.getId() == null) {
-            return ChangeOperation.ADD;
+            return ChangeOperation.COLLECTION_ADD;
         }
         if (leaf.getParent() == null && leaf.getParentUuid() != null) {
-            return ChangeOperation.REMOVE;
+            return ChangeOperation.COLLECTION_REMOVE;
         }
-        return ChangeOperation.REPLACE;
+        return ChangeOperation.REFERENCE_REPLACE;
     }
 }

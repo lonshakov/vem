@@ -1,11 +1,11 @@
-package lsa.prototype.vem.model.context;
+package vem.basemodel.request;
 
 import jakarta.persistence.*;
-import lsa.prototype.vem.model.basic.PersistedObject;
-import lsa.prototype.vem.model.version.LeafEntity;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeUnit;
 import lsa.prototype.vem.request.PolymorphEntity;
+import vem.basemodel.basic.PersistedObject;
+import vem.basemodel.version.LeafEntity;
 
 @MappedSuperclass
 public class ChangeUnitTemplate<R extends ChangeRequestTemplate<?>> extends PersistedObject implements ChangeUnit<R> {

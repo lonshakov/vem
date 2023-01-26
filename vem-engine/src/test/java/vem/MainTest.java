@@ -1,10 +1,9 @@
 package vem;
 
 import jakarta.persistence.EntityManager;
-import lsa.prototype.vem.engine.impl.request.CRSpecificationDTO;
-import lsa.prototype.vem.engine.impl.request.CRUnitDTO;
+import lsa.prototype.vem.engine.impl.crs.CRSpecificationDTO;
+import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import lsa.prototype.vem.model.Leaf;
-import lsa.prototype.vem.model.context.ChangeRequestTemplate;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
@@ -12,9 +11,9 @@ import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
 import lsa.prototype.vem.spi.schema.Schema;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
-import org.hibernate.internal.SessionImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vem.basemodel.request.ChangeRequestTemplate;
 import vem.context.StoreChangeRequest;
 import vem.context.StoreChangeUnit;
 import vem.entity.Item;
@@ -150,7 +149,8 @@ public class MainTest {
                     .setParameter("parentUuid", store.getUuid())
                     .getResultList();
 
-            Assertions.assertEquals(2, parcels.size());
+            //should be 1 history + 1 passive + 1 active = 3
+            Assertions.assertEquals(3, parcels.size());
         });
 
         //merge (add leaf leve 2)
@@ -196,19 +196,23 @@ public class MainTest {
                     .setParameter("parentUuid", parcel.getUuid())
                     .getResultList();
 
-            Assertions.assertEquals(2, items.size());
+            //should be 1 history + 1 passive + 1 active = 3
+            Assertions.assertEquals(3, items.size());
         });
         //merge (update body)
         isolator.accept((vem) -> {
-            SessionImpl session = vem.em().unwrap(SessionImpl.class);
-
             Store store = selectX5.apply(vem);
-            StoreBody body = store.getBody();
-
             store.setBody(new StoreBody("Phuket"));
 
-            //vem.em().detach(store);
-            //session.contains();
+            ChangeRequest<Store> request = vem.merge(store);
+            vem.publish(request);
+            vem.affirm(request);
+
+            Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
+        });
+        isolator.accept(vem -> {
+            Store store = selectX5.apply(vem);
+            store.setBody(null);
 
             ChangeRequest<Store> request = vem.merge(store);
             vem.publish(request);
@@ -230,8 +234,8 @@ public class MainTest {
             parcel.setParentUuid(store.getUuid());
 
             ChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(store);
-            crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, body));
-            crs.getUnits().add(new CRUnitDTO(ChangeOperation.ADD, parcel));
+            crs.getUnits().add(new CRSpecificationUnitDTO(ChangeOperation.COLLECTION_ADD, body));
+            crs.getUnits().add(new CRSpecificationUnitDTO(ChangeOperation.COLLECTION_ADD, parcel));
 
             ChangeRequest<Store> request = vem.persist(crs);
             vem.publish(request);
@@ -329,7 +333,7 @@ public class MainTest {
             StoreChangeUnit unit = new StoreChangeUnit();
             unit.setRequest(request);
             unit.setLeaf(parcel);
-            unit.setOperation(ChangeOperation.ADD);
+            unit.setOperation(ChangeOperation.COLLECTION_ADD);
             vem.em().persist(unit);
         });
         isolator.accept((vem) -> {

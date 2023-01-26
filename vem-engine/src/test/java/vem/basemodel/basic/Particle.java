@@ -1,4 +1,4 @@
-package lsa.prototype.vem.model.basic;
+package vem.basemodel.basic;
 
 import jakarta.persistence.MappedSuperclass;
 

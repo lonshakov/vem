@@ -1,13 +1,12 @@
-package lsa.prototype.vem.engine.impl.lab;
+package lsa.prototype.vem.engine.impl.crs;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import lsa.prototype.vem.engine.impl.request.CRSpecificationDTO;
-import lsa.prototype.vem.engine.impl.request.CRUnitDTO;
 import lsa.prototype.vem.model.*;
 import lsa.prototype.vem.request.ChangeOperation;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
+import lsa.prototype.vem.spi.request.ChangeRequestSpecificationBuilder;
 import lsa.prototype.vem.spi.schema.Datatype;
 import lsa.prototype.vem.spi.schema.Parameter;
 import lsa.prototype.vem.spi.session.VersioningEntityManager;
@@ -16,7 +15,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CRSMergeBuilder implements ChangeRequestSpecificationBuilder {
+public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBuilder {
     @Override
     public <T extends Root> ChangeRequestSpecification<T> build(T root, VersioningEntityManager vem) {
         ChangeRequestSpecification<T> specification = new CRSpecificationDTO<>(root);
@@ -25,12 +24,13 @@ public class CRSMergeBuilder implements ChangeRequestSpecificationBuilder {
     }
 
     <T extends Root, V extends Versionable> void process(V entity, VersioningEntityManager vem, ChangeRequestSpecification<T> specification) {
+        if (isProcessed(entity, specification)) {
+            return;
+        }
         Datatype<V> datatype = vem.getSchema().datatype(entity);
         for (Parameter<V> parameter : datatype.collections().values()) {
             defineCollectionOperations(entity, vem, specification, parameter);
             for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
-                //if (leaf.getId() != null)
-
                 process(leaf, vem, specification);
             }
         }
@@ -39,9 +39,8 @@ public class CRSMergeBuilder implements ChangeRequestSpecificationBuilder {
                 continue;
             }
             defineReferenceOperation(entity, vem, specification, parameter);
-
             Leaf<?> leaf = (Leaf<?>) parameter.get(entity);
-            if (leaf != null && leaf.getId() != null) {
+            if (leaf != null) {
                 process(leaf, vem, specification);
             }
         }
@@ -52,42 +51,53 @@ public class CRSMergeBuilder implements ChangeRequestSpecificationBuilder {
         Datatype<Leaf<?>> parameterDatatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
         Serializable parentUuid = entity.getUuid();
 
-        Leaf<Versionable> newLeaf = (Leaf<Versionable>) parameter.get(entity);
+        Leaf<?> newLeaf = (Leaf<?>) parameter.get(entity);
         Class<Leaf<?>> type = parameterDatatype.getJavaType();
 
         Optional<Leaf<?>> oldLeaf = fetchByParent(vem.em(), type, entity).stream().findFirst();
 
-        if (newLeaf == null && oldLeaf.isPresent()) {
-            //remove
-            specification.getUnits().add(new CRUnitDTO(
-                    ChangeOperation.REMOVE,
-                    oldLeaf.get()
+        if ((newLeaf == null && oldLeaf.isEmpty())
+                || newLeaf != null && oldLeaf.isPresent() && newLeaf.getUuid().equals(oldLeaf.get().getUuid())) {
+            return;
+        }
+
+        if (newLeaf == null) {
+            Leaf<?> leaf = parameterDatatype.clone(oldLeaf.get());
+            parameterDatatype.primitive("version").set(leaf, new Version(VersionState.PURGE, 0));
+            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.reference("parent").set(leaf, null);
+            specification.getUnits().add(new CRSpecificationUnitDTO(
+                    ChangeOperation.REFERENCE_NULLIFY,
+                    leaf
             ));
-            parameterDatatype.primitive("parentUuid").set(newLeaf, parentUuid);
-            CRSUtil.defineChangeOperationCascade(
-                    oldLeaf.get(),
+            /*CRSUtil.defineChangeOperationCascade(
+                    leaf,
                     vem,
                     specification,
                     ChangeOperation.REMOVE
-            );
-        } else if (newLeaf != null && (oldLeaf.isEmpty() || !oldLeaf.get().getUuid().equals(newLeaf.getUuid()))) {
-            //add
-            specification.getUnits().add(new CRUnitDTO(
-                    ChangeOperation.ADD,
-                    newLeaf
+            );*/
+            return;
+        } else {
+            Leaf<?> leaf = newLeaf;
+            parameterDatatype.primitive("version").set(leaf, new Version(VersionState.DRAFT, 0));
+            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.reference("parent").set(leaf, null);
+            specification.getUnits().add(new CRSpecificationUnitDTO(
+                    ChangeOperation.REFERENCE_REPLACE,
+                    leaf
             ));
-            parameterDatatype.primitive("parentUuid").set(newLeaf, parentUuid);
-            CRSUtil.defineChangeOperationCascade(
-                    newLeaf,
+            /*CRSUtil.defineChangeOperationCascade(
+                    leaf,
                     vem,
                     specification,
-                    ChangeOperation.ADD
-            );
+                    ChangeOperation.REMOVE
+            );*/
         }
     }
 
     private <T extends Root, V extends Versionable>
-    void defineCollectionOperations(V entity, VersioningEntityManager vem, ChangeRequestSpecification<T> specification, Parameter<V> parameter) {
+    void defineCollectionOperations(V entity, VersioningEntityManager
+            vem, ChangeRequestSpecification<T> specification, Parameter<V> parameter) {
         Datatype<Leaf<?>> parameterDatatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
         Class<Leaf<?>> type = parameterDatatype.getJavaType();
         Serializable parentUuid = entity.getUuid();
@@ -105,39 +115,41 @@ public class CRSMergeBuilder implements ChangeRequestSpecificationBuilder {
         //remove
         Set<Serializable> removeIndex = new HashSet<>(oldLeaves.keySet());
         removeIndex.removeAll(newLeaves.keySet());
-        removeIndex.forEach(id -> {
-            Leaf<?> leaf = oldLeaves.get(id);
-            specification.getUnits().add(new CRUnitDTO(
-                    ChangeOperation.REMOVE,
-                    leaf
-            ));
+        removeIndex.forEach(uuid -> {
+            Leaf<?> leaf = parameterDatatype.clone(oldLeaves.get(uuid));
+            parameterDatatype.primitive("version").set(leaf, new Version(VersionState.PURGE, 0));
             parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.reference("parent").set(leaf, null);
-            CRSUtil.defineChangeOperationCascade(
+
+            specification.getUnits().add(new CRSpecificationUnitDTO(
+                    ChangeOperation.COLLECTION_REMOVE,
+                    leaf
+            ));
+            /*CRSUtil.defineChangeOperationCascade(
                     leaf,
                     vem,
                     specification,
                     ChangeOperation.REMOVE
-            );
+            );*/
         });
 
         //add
         Set<Serializable> addIndex = new HashSet<>(newLeaves.keySet());
         addIndex.removeAll(oldLeaves.keySet());
-        addIndex.forEach(id -> {
-            Leaf<?> leaf = newLeaves.get(id);
-            specification.getUnits().add(new CRUnitDTO(
-                    ChangeOperation.ADD,
+        addIndex.forEach(uuid -> {
+            Leaf<?> leaf = newLeaves.get(uuid);
+            specification.getUnits().add(new CRSpecificationUnitDTO(
+                    ChangeOperation.COLLECTION_ADD,
                     leaf
             ));
             parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.reference("parent").set(leaf, null);
-            CRSUtil.defineChangeOperationCascade(
+            /*CRSUtil.defineChangeOperationCascade(
                     leaf,
                     vem,
                     specification,
                     ChangeOperation.ADD
-            );
+            );*/
         });
     }
 
@@ -149,5 +161,13 @@ public class CRSMergeBuilder implements ChangeRequestSpecificationBuilder {
                 cb.equal(root.get("parentUuid"), parent.getUuid()),
                 cb.equal(root.get("version").get("state"), VersionState.ACTIVE));
         return em.createQuery(query).getResultList();
+    }
+
+    private <T extends Root, V extends Versionable> boolean isProcessed(V
+                                                                                entity, ChangeRequestSpecification<T> specification) {
+        return entity instanceof Leaf<?>
+                && specification
+                .getUnits()
+                .contains(new CRSpecificationUnitDTO(null, (Leaf<?>) entity));
     }
 }

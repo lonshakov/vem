@@ -3,7 +3,7 @@ package vem.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import lsa.prototype.vem.model.version.RootEntity;
+import vem.basemodel.version.RootEntity;
 
 import java.util.ArrayList;
 import java.util.List;

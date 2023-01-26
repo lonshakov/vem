@@ -5,6 +5,7 @@ import lsa.prototype.vem.model.GlobalEntity;
 import lsa.prototype.vem.model.Persistable;
 import lsa.prototype.vem.model.Root;
 import lsa.prototype.vem.request.ChangeRequest;
+import lsa.prototype.vem.spi.function.VisitorContext;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
 import lsa.prototype.vem.spi.request.Changer;
 import lsa.prototype.vem.spi.schema.HistoryMappings;
@@ -36,7 +37,7 @@ public interface VersioningEntityManager extends AutoCloseable {
 
     <T extends GlobalEntity> T find(Class<T> type, Serializable uuid);
 
-    <T extends Persistable> void walk(T entity, BiConsumer<Persistable, WalkContext> task);
+    <T extends Persistable> void cascade(T entity, BiConsumer<Persistable, VisitorContext> task);
 
     EntityManager em();
 

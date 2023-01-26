@@ -1,4 +1,4 @@
-package lsa.prototype.vem.model.version;
+package vem.basemodel.version;
 
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;

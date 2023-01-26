@@ -3,6 +3,7 @@ package lsa.prototype.vem.engine.impl.request;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import lsa.prototype.vem.model.Leaf;
 import lsa.prototype.vem.model.Persistable;
 import lsa.prototype.vem.model.Root;
@@ -54,7 +55,7 @@ public class BatchUnitIterator implements Iterator<ChangeRequestSpecification.Un
                     .stream()
                     .collect(Collectors.toMap(Persistable::getId, leaf -> leaf));
 
-            unitIterator = identifiers.stream().map(id -> (ChangeRequestSpecification.Unit) new CRUnitDTO(
+            unitIterator = identifiers.stream().map(id -> (ChangeRequestSpecification.Unit) new CRSpecificationUnitDTO(
                     operations.get(id),
                     leaves.get(id)
             )).iterator();

@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.impl.lab;
+package lsa.prototype.vem.engine.impl.function;
 
 import lsa.prototype.vem.model.Persistable;
 import lsa.prototype.vem.spi.schema.Datatype;
@@ -22,14 +22,15 @@ public class Cloner {
         components.put(entity, clone);
 
         //copy primitives
-        datatype.primitives().values().forEach(parameter -> parameter.set(clone, parameter.get(entity)));
+        datatype.primitives().values().stream().filter(p -> !p.getName().equals("version")).forEach(parameter -> {
+            parameter.set(clone, parameter.get(entity));
+        });
 
         //copy collections
         datatype.collections().values().forEach(parameter -> {
             List<Persistable> cloneCollection = ((Collection<Persistable>) parameter.get(entity))
                     .stream()
                     .map(leaf -> clone(leaf, schema))
-                    //.map(leaf -> wire(leaf, clone, parameter))
                     .toList();
             ((Collection<Persistable>) parameter.get(clone)).addAll(cloneCollection);
         });
@@ -45,13 +46,4 @@ public class Cloner {
         });
         return clone;
     }
-
-    /*private <T, U> T wire(T child, U parent, Parameter<U> parameter) {
-        if (child instanceof Leaf<?>) {
-            Object parentUuid = parameter.getStructureDatatype().primitive("uuid").get(parent);
-            Datatype<Leaf<?>> datatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
-            datatype.primitive("parentUuid").set((Leaf<?>) child, parentUuid);
-        }
-        return child;
-    }*/
 }

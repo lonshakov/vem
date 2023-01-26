@@ -1,11 +1,11 @@
-package lsa.prototype.vem.model.context;
+package vem.basemodel.request;
 
 import jakarta.persistence.*;
-import lsa.prototype.vem.model.basic.Particle;
-import lsa.prototype.vem.model.version.RootEntity;
 import lsa.prototype.vem.request.ChangeRequest;
 import lsa.prototype.vem.request.ChangeState;
 import lsa.prototype.vem.request.Sign;
+import vem.basemodel.basic.Particle;
+import vem.basemodel.version.RootEntity;
 
 @MappedSuperclass
 public class ChangeRequestTemplate<T extends RootEntity> extends Particle implements ChangeRequest<T> {

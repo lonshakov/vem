@@ -1,4 +1,4 @@
-package lsa.prototype.vem.engine.impl.request;
+package lsa.prototype.vem.engine.impl.crs;
 
 import lsa.prototype.vem.model.Root;
 import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
