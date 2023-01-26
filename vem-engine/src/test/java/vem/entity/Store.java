@@ -1,10 +1,10 @@
 package vem.entity;
 
+import vem.basemodel.version.RootEntity;
+
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import vem.basemodel.version.RootEntity;
-
 import java.util.ArrayList;
 import java.util.List;
 

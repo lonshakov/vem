@@ -1,10 +1,10 @@
 package vem.basemodel.version;
 
+import io.persistence.vem.domain.model.Leaf;
+import io.persistence.vem.domain.model.Versionable;
+
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
-import lsa.prototype.vem.model.Leaf;
-import lsa.prototype.vem.model.Versionable;
-
 import java.io.Serializable;
 
 @MappedSuperclass

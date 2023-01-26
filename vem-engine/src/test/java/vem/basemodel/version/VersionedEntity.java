@@ -1,11 +1,11 @@
 package vem.basemodel.version;
 
-import javax.persistence.*;
-import lsa.prototype.vem.model.Version;
-import lsa.prototype.vem.model.VersionState;
-import lsa.prototype.vem.model.Versionable;
+import io.persistence.vem.domain.model.Version;
+import io.persistence.vem.domain.model.VersionState;
+import io.persistence.vem.domain.model.Versionable;
 import vem.basemodel.basic.Particle;
 
+import javax.persistence.*;
 import java.io.Serializable;
 
 @MappedSuperclass

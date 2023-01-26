@@ -1,11 +1,12 @@
 package vem.basemodel.request;
 
-import javax.persistence.*;
-import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.ChangeUnit;
-import lsa.prototype.vem.request.PolymorphEntity;
+import io.persistence.vem.domain.request.ChangeOperation;
+import io.persistence.vem.domain.request.ChangeUnit;
+import io.persistence.vem.domain.request.PolymorphEntity;
 import vem.basemodel.basic.PersistedObject;
 import vem.basemodel.version.LeafEntity;
+
+import javax.persistence.*;
 
 @MappedSuperclass
 public class ChangeUnitTemplate<R extends ChangeRequestTemplate<?>> extends PersistedObject implements ChangeUnit<R> {

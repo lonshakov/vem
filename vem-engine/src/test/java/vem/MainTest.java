@@ -1,16 +1,15 @@
 package vem;
 
-import javax.persistence.EntityManager;
-import lsa.prototype.vem.engine.impl.crs.CRSpecificationDTO;
-import lsa.prototype.vem.engine.impl.crs.CRSpecificationUnitDTO;
-import lsa.prototype.vem.model.Leaf;
-import lsa.prototype.vem.request.ChangeOperation;
-import lsa.prototype.vem.request.ChangeRequest;
-import lsa.prototype.vem.spi.request.ChangeRequestSpecification;
-import lsa.prototype.vem.spi.schema.Datatype;
-import lsa.prototype.vem.spi.schema.HistoryMappings;
-import lsa.prototype.vem.spi.schema.Schema;
-import lsa.prototype.vem.spi.session.VersioningEntityManager;
+import io.persistence.vem.domain.model.Leaf;
+import io.persistence.vem.domain.request.ChangeOperation;
+import io.persistence.vem.domain.request.ChangeRequest;
+import io.persistence.vem.engine.impl.crs.CRSpecificationDTO;
+import io.persistence.vem.engine.impl.crs.CRSpecificationUnitDTO;
+import io.persistence.vem.spi.request.ChangeRequestSpecification;
+import io.persistence.vem.spi.schema.Datatype;
+import io.persistence.vem.spi.schema.HistoryMappings;
+import io.persistence.vem.spi.schema.Schema;
+import io.persistence.vem.spi.session.VersioningEntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vem.basemodel.request.ChangeRequestTemplate;
@@ -22,6 +21,7 @@ import vem.entity.Store;
 import vem.entity.StoreBody;
 import vem.util.TestDatabase;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;

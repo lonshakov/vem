@@ -1,7 +1,8 @@
 package vem.context;
 
-import javax.persistence.Entity;
 import vem.basemodel.request.ChangeUnitTemplate;
+
+import javax.persistence.Entity;
 
 @Entity
 public class StoreChangeUnit extends ChangeUnitTemplate<StoreChangeRequest> {

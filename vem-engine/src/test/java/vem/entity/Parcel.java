@@ -1,9 +1,9 @@
 package vem.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
 import vem.basemodel.version.LeafEntity;
 
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 

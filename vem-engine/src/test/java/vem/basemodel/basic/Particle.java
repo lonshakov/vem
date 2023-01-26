@@ -1,7 +1,6 @@
 package vem.basemodel.basic;
 
 import javax.persistence.MappedSuperclass;
-
 import java.io.Serializable;
 import java.util.UUID;
 
