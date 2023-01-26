@@ -1,3 +1,3 @@
 # vem
 
-Versioned Entity Model
+Versioning Entity Model
