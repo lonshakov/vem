@@ -7,6 +7,7 @@ import vem.basemodel.basic.Particle;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 public class VersionedEntity extends Particle implements Versionable {
@@ -15,7 +16,7 @@ public class VersionedEntity extends Particle implements Versionable {
             @AttributeOverride(name = "state", column = @Column(name = "version_state")),
             @AttributeOverride(name = "date", column = @Column(name = "version_date"))
     })
-    private Version version = new Version(VersionState.DRAFT, 0);
+    private Version version = new Version(VersionState.DRAFT, LocalDateTime.MIN);
     private long partition;
 
     public Version getVersion() {

@@ -1,13 +1,15 @@
 package io.persistence.vem.domain.request;
 
+import java.time.LocalDateTime;
+
 public class Sign {
     private String user;
-    private long date;
+    private LocalDateTime date;
 
     public Sign() {
     }
 
-    public Sign(String user, long date) {
+    public Sign(String user, LocalDateTime date) {
         this.user = user;
         this.date = date;
     }
@@ -16,7 +18,7 @@ public class Sign {
         return user;
     }
 
-    public long getDate() {
+    public LocalDateTime getDate() {
         return date;
     }
 }

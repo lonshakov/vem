@@ -117,26 +117,4 @@ public class Util {
             register.put(entity, axis);
         }
     }
-
-    //todo
-    private static <T extends Root> void defCascade(VersioningEntityManager vem, T entity) {
-        ChangeRequestSpecification<T> specification = null;
-        ChangeOperation operation = null;
-
-        vem.cascade(entity, (obj, ctx) -> {
-            Axis<GlobalEntity> axis = ctx.getAxis(obj);
-            Serializable parentUuid = (Serializable) axis.getParameter()
-                    .getStructureDatatype()
-                    .getGlobalIdentifier()
-                    .get(axis.getParent());
-
-            Parameter<?> parameter = ctx.getAxis(obj).getParameter();
-            Datatype<Object> parameterDatatype = (Datatype<Object>) parameter.getParameterDatatype();
-            specification.getUnits().add(new CRSpecificationUnitDTO(
-                    operation,
-                    (Leaf<?>) obj
-            ));
-            parameterDatatype.getPrimitive("parentUuid").set(obj, parentUuid);
-        });
-    }
 }

@@ -1,6 +1,5 @@
 package io.persistence.vem.spi.session;
 
-import io.persistence.vem.domain.model.GlobalEntity;
 import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.domain.request.ChangeRequest;
 import io.persistence.vem.spi.function.VisitorContext;
@@ -34,7 +33,7 @@ public interface VersioningEntityManager extends AutoCloseable {
 
     <T extends Root> void destroy(ChangeRequestSpecification<T> specification);
 
-    <T extends GlobalEntity> T find(Class<T> type, Serializable uuid);
+    <T> T find(Class<T> type, Serializable uuid);
 
     <T> void cascade(T entity, BiConsumer<Object, VisitorContext> task);
 

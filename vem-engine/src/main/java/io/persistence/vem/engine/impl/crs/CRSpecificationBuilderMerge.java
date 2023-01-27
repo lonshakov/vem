@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,7 +73,7 @@ public class CRSpecificationBuilderMerge<T extends Root> implements ChangeReques
         }
         if (newLeaf == null) {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaf.get());
-            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, 0));
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, LocalDateTime.MIN));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
             specification.getUnits().add(new CRSpecificationUnitDTO(
@@ -81,7 +82,7 @@ public class CRSpecificationBuilderMerge<T extends Root> implements ChangeReques
             ));
         } else {
             Leaf<?> leaf = newLeaf;
-            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.DRAFT, 0));
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.DRAFT, LocalDateTime.MIN));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
             specification.getUnits().add(new CRSpecificationUnitDTO(
@@ -111,7 +112,7 @@ public class CRSpecificationBuilderMerge<T extends Root> implements ChangeReques
         removeIndex.removeAll(newLeaves.keySet());
         removeIndex.forEach(uuid -> {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaves.get(uuid));
-            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, 0));
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, LocalDateTime.MIN));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
 

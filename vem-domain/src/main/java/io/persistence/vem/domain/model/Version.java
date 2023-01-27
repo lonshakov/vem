@@ -1,10 +1,12 @@
 package io.persistence.vem.domain.model;
 
+import java.time.LocalDateTime;
+
 public class Version {
     private VersionState state;
-    private long date;
+    private LocalDateTime date;
 
-    public Version(VersionState state, long date) {
+    public Version(VersionState state, LocalDateTime date) {
         this.state = state;
         this.date = date;
     }
@@ -16,7 +18,7 @@ public class Version {
         return state;
     }
 
-    public long getDate() {
+    public LocalDateTime getDate() {
         return date;
     }
 }

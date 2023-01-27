@@ -8,12 +8,10 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 public class TestDatabase {
-    private final static EntityManagerFactory emf = Persistence.createEntityManagerFactory("vem-test");
-    private final static VersioningEntityManagerFactory vemf = new HibernateVersioningSessionFactory(emf.unwrap(SessionFactoryImpl.class));
-
-    public EntityManagerFactory getEntityManagerFactory() {
-        return emf;
-    }
+    private final static VersioningEntityManagerFactory vemf = new HibernateVersioningSessionFactory(
+            Persistence.createEntityManagerFactory("vem-test").unwrap(SessionFactoryImpl.class),
+            new SessionContextServiceStab()
+    );
 
     public VersioningEntityManagerFactory getVersioningEntityManagerFactory() {
         return vemf;

@@ -10,7 +10,6 @@ import io.persistence.vem.engine.impl.crs.CRSpecificationBuilderMerge;
 import io.persistence.vem.engine.impl.function.Util;
 import io.persistence.vem.engine.impl.request.ChangerImpl;
 import io.persistence.vem.spi.VersioningException;
-import io.persistence.vem.spi.function.PersistenceProcessor;
 import io.persistence.vem.spi.function.VisitorContext;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.request.Changer;
@@ -18,27 +17,27 @@ import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 import io.persistence.vem.spi.session.VersioningEntityManagerFactory;
+import io.persistence.vem.spi.context.SessionContext;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import java.io.Serializable;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class HibernateVersioningSession implements VersioningEntityManager {
     private final VersioningEntityManagerFactory factory;
     private final EntityManager em;
-    private final Map<String, PersistenceProcessor> processors;
     private final Changer changer;
+    private final SessionContext context;
 
-    public HibernateVersioningSession(VersioningEntityManagerFactory factory, EntityManager em, Map<String, PersistenceProcessor> processors) {
+    public HibernateVersioningSession(VersioningEntityManagerFactory factory, EntityManager em, SessionContext context) {
         this.factory = factory;
         this.em = em;
-        this.processors = new HashMap<>(processors);
+        this.context = context;
         changer = new ChangerImpl(this);
     }
 
@@ -80,7 +79,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         T entity = findNonNull(
                 (Class<T>) specification.getRoot().getClass(),
-                getUuid(specification.getRoot())
+                getSchema().getUtil().getUuid(specification.getRoot())
         );
 
         ChangeRequest<T> request;
@@ -115,7 +114,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         T root = request.getRoot();
         if (root.getVersion().getState().equals(VersionState.DRAFT)) {
-            getSchema().getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, 0));
+            getSchema().getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, LocalDateTime.MIN));
             em.persist(request.getRoot());
         }
 
@@ -159,7 +158,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends GlobalEntity> T find(Class<T> type, Serializable uuid) {
+    public <T> T find(Class<T> type, Serializable uuid) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(uuid);
 
@@ -249,7 +248,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
                         cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
-                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, 0));
+                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, LocalDateTime.MIN));
                     datatype.getReference("parent").set(active, null);
                     em.persist(active);
                 });
@@ -263,7 +262,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
                         cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
-                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, 0));
+                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, LocalDateTime.MIN));
                     datatype.getReference("parent").set(active, null);
                     em.persist(active);
                 });
@@ -274,7 +273,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             case COLLECTION_ADD, REFERENCE_REPLACE, GRAPH_CREATE -> VersionState.ACTIVE;
             case COLLECTION_REMOVE, REFERENCE_NULLIFY -> VersionState.PASSIVE;
         };
-        datatype.getPrimitive("version").set(leaf, new Version(state, 0));
+        datatype.getPrimitive("version").set(leaf, new Version(state, LocalDateTime.MIN));
     }
 
     private <T extends Leaf<P>, P extends Versionable> CriteriaQuery<P> getActiveParentQuery(T entity) {
@@ -295,7 +294,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         return query;
     }
 
-    private <T extends GlobalEntity> T findNonNull(Class<T> type, Serializable uuid) {
+    private <T> T findNonNull(Class<T> type, Serializable uuid) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(uuid);
 
@@ -305,7 +304,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         return entity;
     }
 
-    private <T extends GlobalEntity> Serializable getUuid(T entity) {
+    private <T> Serializable getUuid(T entity) {
         return getSchema().getUtil().getUuid(entity);
     }
 }

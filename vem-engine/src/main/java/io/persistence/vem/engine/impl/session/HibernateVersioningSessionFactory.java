@@ -7,6 +7,7 @@ import io.persistence.vem.spi.schema.HistoryMappings;
 import io.persistence.vem.spi.schema.Schema;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 import io.persistence.vem.spi.session.VersioningEntityManagerFactory;
+import io.persistence.vem.spi.context.SessionContextService;
 import org.hibernate.internal.SessionFactoryImpl;
 
 import javax.persistence.EntityManagerFactory;
@@ -16,16 +17,13 @@ public class HibernateVersioningSessionFactory implements VersioningEntityManage
     private final SessionFactoryImpl factory;
     private final Schema schema;
     private final HistoryMappings historyMappings;
-    private final ConcurrentHashMap<String, PersistenceProcessor> processors = new ConcurrentHashMap<>();
+    private final SessionContextService ctxService;
 
-    public HibernateVersioningSessionFactory(SessionFactoryImpl factory) {
+    public HibernateVersioningSessionFactory(SessionFactoryImpl factory, SessionContextService ctxService) {
         this.factory = factory;
+        this.ctxService = ctxService;
         schema = new HibernateSchema(factory.getMetamodel());
         historyMappings = new HistoryMappings(schema);
-
-        //default values
-        processors.put("entity-persist", new Persister());
-        processors.put("entity-merge", new Persister());
     }
 
     @Override
@@ -33,7 +31,7 @@ public class HibernateVersioningSessionFactory implements VersioningEntityManage
         return new HibernateVersioningSession(
                 this,
                 factory.createEntityManager(),
-                processors
+                ctxService.getUserContext()
         );
     }
 
