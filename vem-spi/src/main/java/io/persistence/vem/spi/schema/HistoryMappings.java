@@ -16,8 +16,8 @@ public class HistoryMappings {
         Map<Class<?>, HistoryMapping<?>> distinct = StreamSupport.stream(schema.spliterator(), false)
                 .filter(o -> ChangeUnit.class.isAssignableFrom(o.getJavaType()))
                 .map(unit -> {
-                    Datatype<?> request = unit.reference("request").getParameterDatatype();
-                    Datatype<? extends Root> root = (Datatype<? extends Root>) request.reference("root").getParameterDatatype();
+                    Datatype<?> request = unit.getReference("request").getParameterDatatype();
+                    Datatype<? extends Root> root = (Datatype<? extends Root>) request.getReference("root").getParameterDatatype();
                     return new HistoryMapping<>(root, request, unit);
                 })
                 .collect(Collectors.toMap(e -> e.getRootDatatype().getJavaType(), e -> e));
@@ -44,6 +44,6 @@ public class HistoryMappings {
             return key;
         }
 
-        return getRoot(schema.datatype(key).reference("parent").getParameterDatatype().getJavaType(), schema);
+        return getRoot(schema.getDatatype(key).getReference("parent").getParameterDatatype().getJavaType(), schema);
     }
 }

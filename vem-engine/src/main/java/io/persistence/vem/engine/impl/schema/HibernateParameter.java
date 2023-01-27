@@ -47,7 +47,7 @@ public class HibernateParameter<T> implements Parameter<T> {
         Class<?> type = getGraphType();
         return type == null
                 ? null
-                : structure.getSchema().datatype(type);
+                : structure.getSchema().getDatatype(type);
     }
 
     @Override

@@ -34,17 +34,17 @@ public class ChangerImpl implements Changer {
     @Override
     public <T extends Root> ChangeRequest<T> createChangeRequest(T entity) {
         ChangeRequest<T> request = getRequestDatatype(entity).instantiate();
-        vem.getSchema().datatype(request).reference("root").set(request, entity);
+        vem.getSchema().getDatatype(request).getReference("root").set(request, entity);
         return request;
     }
 
     @Override
     public <T extends Root> ChangeUnit<ChangeRequest<T>> createChangeUnit(ChangeRequest<T> request, Leaf<?> leaf, ChangeOperation operation) {
         ChangeUnit<ChangeRequest<T>> unit = getUnitDatatype(request.getRoot()).instantiate();
-        Datatype<ChangeUnit<ChangeRequest<T>>> datatype = vem.getSchema().datatype(unit);
-        datatype.reference("request").set(unit, request);
-        datatype.primitive("leaf").set(unit, new PolymorphEntity(leaf.getClass(), leaf.getId()));
-        datatype.primitive("operation").set(unit, operation);
+        Datatype<ChangeUnit<ChangeRequest<T>>> datatype = vem.getSchema().getDatatype(unit);
+        datatype.getReference("request").set(unit, request);
+        datatype.getPrimitive("leaf").set(unit, new PolymorphEntity(leaf.getClass(), leaf.getId()));
+        datatype.getPrimitive("operation").set(unit, operation);
         return unit;
     }
 

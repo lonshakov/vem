@@ -1,5 +1,6 @@
 package io.persistence.vem.engine.impl.schema;
 
+import io.persistence.vem.domain.model.GlobalId;
 import io.persistence.vem.engine.impl.function.Cloner;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
@@ -8,9 +9,13 @@ import org.hibernate.metamodel.model.domain.spi.EntityTypeDescriptor;
 import org.hibernate.metamodel.spi.MetamodelImplementor;
 import org.hibernate.persister.entity.EntityPersister;
 
+import javax.persistence.Id;
+import javax.persistence.Version;
 import javax.persistence.metamodel.Attribute;
+import java.lang.reflect.AccessibleObject;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HibernateDatatype<T> implements Datatype<T> {
@@ -19,6 +24,7 @@ public class HibernateDatatype<T> implements Datatype<T> {
     private final ConcurrentHashMap<String, Parameter<T>> references = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Parameter<T>> collections = new ConcurrentHashMap<>();
     private final Parameter<T> identifier;
+    private final Parameter<T> globalIdentifier;
     private final EntityPersister entityPersister;
     private final EntityTypeDescriptor<T> entityDescriptor;
 
@@ -28,9 +34,12 @@ public class HibernateDatatype<T> implements Datatype<T> {
         entityDescriptor = metamodel.entity(type);
         entityPersister = metamodel.entityPersister(type);
 
+        Parameter<T> globalIdentifier = null;
+
         for (Attribute<? super T, ?> attribute : entityDescriptor.getAttributes()) {
             String name = attribute.getName();
-            if ("id".equals(name)) {
+            AccessibleObject member = (AccessibleObject) attribute.getJavaMember();
+            if (Set.of(Id.class, Version.class).stream().anyMatch(member::isAnnotationPresent)) {
                 continue;
             }
             Parameter<T> parameter = new HibernateParameter<>(
@@ -46,17 +55,24 @@ public class HibernateDatatype<T> implements Datatype<T> {
                     references.put(name, parameter);
                 }
             } else {
-                primitives.put(name, parameter);
+                if (member.isAnnotationPresent(GlobalId.class)) {
+                    globalIdentifier = parameter;
+                } else {
+                    primitives.put(name, parameter);
+                }
             }
         }
 
+        this.globalIdentifier = globalIdentifier;
+
         identifier = new HibernateParameter<>(
                 this,
-                entityDescriptor.getAttribute("id"),
+                entityDescriptor.getId(entityDescriptor.getIdType().getJavaType()),
                 new Accessors.Id(entityPersister),
-                entityPersister.getPropertyType("id")
+                entityPersister.getIdentifierType()
         );
     }
+
 
     @Override
     public T instantiate() {
@@ -69,37 +85,42 @@ public class HibernateDatatype<T> implements Datatype<T> {
     }
 
     @Override
-    public Parameter<T> identifier() {
+    public Parameter<T> getIdentifier() {
         return identifier;
     }
 
     @Override
-    public Parameter<T> primitive(String name) {
+    public Parameter<T> getGlobalIdentifier() {
+        return globalIdentifier;
+    }
+
+    @Override
+    public Parameter<T> getPrimitive(String name) {
         return primitives.get(name);
     }
 
     @Override
-    public Parameter<T> reference(String name) {
+    public Parameter<T> getReference(String name) {
         return references.get(name);
     }
 
     @Override
-    public Parameter<T> collection(String name) {
+    public Parameter<T> getCollection(String name) {
         return collections.get(name);
     }
 
     @Override
-    public Map<String, Parameter<T>> primitives() {
+    public Map<String, Parameter<T>> getPrimitives() {
         return Collections.unmodifiableMap(primitives);
     }
 
     @Override
-    public Map<String, Parameter<T>> references() {
+    public Map<String, Parameter<T>> getReferences() {
         return Collections.unmodifiableMap(references);
     }
 
     @Override
-    public Map<String, Parameter<T>> collections() {
+    public Map<String, Parameter<T>> getCollections() {
         return Collections.unmodifiableMap(collections);
     }
 

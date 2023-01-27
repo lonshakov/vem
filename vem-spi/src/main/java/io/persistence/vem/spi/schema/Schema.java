@@ -1,9 +1,9 @@
 package io.persistence.vem.spi.schema;
 
 public interface Schema extends Iterable<Datatype<?>> {
-    <T> Datatype<T> datatype(Class<T> type);
+    <T> Datatype<T> getDatatype(Class<T> type);
 
-    default <T> Datatype<T> datatype(T object) {
-        return datatype((Class<T>) object.getClass());
+    default <T> Datatype<T> getDatatype(T object) {
+        return getDatatype((Class<T>) object.getClass());
     }
 }

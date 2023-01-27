@@ -1,18 +1,21 @@
 package vem.basemodel.basic;
 
+import io.persistence.vem.domain.model.GlobalId;
+
 import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 import java.util.UUID;
 
 @MappedSuperclass
 public class Particle extends PersistedObject {
-    private String uuid = UUID.randomUUID().toString();
+    @GlobalId
+    private String customUuid = UUID.randomUUID().toString();
 
     public Serializable getUuid() {
-        return uuid;
+        return customUuid;
     }
 
     public void setUuid(Serializable uuid) {
-        this.uuid = uuid.toString();
+        this.customUuid = uuid.toString();
     }
 }

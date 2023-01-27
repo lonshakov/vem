@@ -273,7 +273,7 @@ public class MainTest {
             store.getParcels().add(new Parcel("sweets"));
 
             ChangeRequest<Store> request = vem.persist(store);
-            vem.getSchema().datatype(request).primitive("uuid").set(request, steadyUuid);
+            vem.getSchema().getDatatype(request).getGlobalIdentifier().set(request, steadyUuid);
             //request.setUuid(steadyUuid);
             vem.em().persist(request);
         });
@@ -306,7 +306,7 @@ public class MainTest {
             );
             Assertions.assertEquals(
                     0,
-                    vem.em().createQuery("select r from StoreChangeRequest r where r.uuid = :uuid")
+                    vem.em().createQuery("select r from StoreChangeRequest r where r.customUuid = :uuid")
                             .setParameter("uuid", steadyUuid)
                             .getResultList()
                             .size()
@@ -351,16 +351,16 @@ public class MainTest {
     @Test
     void testMetadataCreation() {
         Schema schema = database.getVersioningEntityManagerFactory().getSchema();
-        Datatype<Store> datatype = schema.datatype(Store.class);
+        Datatype<Store> datatype = schema.getDatatype(Store.class);
 
         Store store = new Store();
 
         Parcel parcel = new Parcel();
         parcel.setName("sweets");
 
-        datatype.primitive("name").set(store, "MVideo");
-        datatype.identifier().set(store, 100L);
-        ((List<Parcel>) datatype.collection("parcels").get(store)).add(parcel);
+        datatype.getPrimitive("name").set(store, "MVideo");
+        datatype.getIdentifier().set(store, 100L);
+        ((List<Parcel>) datatype.getCollection("parcels").get(store)).add(parcel);
 
         Assertions.assertEquals("MVideo", store.getName());
         Assertions.assertEquals(100L, store.getId());
@@ -373,16 +373,16 @@ public class MainTest {
 
     @Test
     void testParameterDatatype() {
-        Datatype<Parcel> datatype = database.getVersioningEntityManagerFactory().getSchema().datatype(Parcel.class);
+        Datatype<Parcel> datatype = database.getVersioningEntityManagerFactory().getSchema().getDatatype(Parcel.class);
 
         Assertions.assertEquals(
                 Item.class,
-                datatype.collection("items").getParameterDatatype().getJavaType()
+                datatype.getCollection("items").getParameterDatatype().getJavaType()
         );
         Assertions.assertEquals(
                 Store.class,
-                datatype.reference("parent").getParameterDatatype().getJavaType()
+                datatype.getReference("parent").getParameterDatatype().getJavaType()
         );
-        Assertions.assertNull(datatype.primitive("name").getParameterDatatype());
+        Assertions.assertNull(datatype.getPrimitive("name").getParameterDatatype());
     }
 }

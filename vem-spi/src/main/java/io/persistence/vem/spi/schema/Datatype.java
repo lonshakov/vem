@@ -7,19 +7,25 @@ public interface Datatype<T> {
 
     T clone(T entity);
 
-    Parameter<T> identifier();
+    Parameter<T> getIdentifier();
 
-    Parameter<T> primitive(String name);
+    Parameter<T> getGlobalIdentifier();
 
-    Parameter<T> reference(String name);
+    Parameter<T> getPrimitive(String name);
 
-    Parameter<T> collection(String name);
+    Parameter<T> getReference(String name);
 
-    Map<String, Parameter<T>> primitives();
+    Parameter<T> getCollection(String name);
 
-    Map<String, Parameter<T>> references();
+    Map<String, Parameter<T>> getPrimitives();
 
-    Map<String, Parameter<T>> collections();
+    Map<String, Parameter<T>> getReferences();
+
+    Map<String, Parameter<T>> getCollections();
+
+    default boolean isGlobal() {
+        return getGlobalIdentifier() != null;
+    }
 
     Class<T> getJavaType();
 

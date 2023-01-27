@@ -20,7 +20,7 @@ public class HibernateSchema implements Schema {
     }
 
     @Override
-    public <T> Datatype<T> datatype(Class<T> type) {
+    public <T> Datatype<T> getDatatype(Class<T> type) {
         return (Datatype<T>) datatypes.get(type);
     }
 

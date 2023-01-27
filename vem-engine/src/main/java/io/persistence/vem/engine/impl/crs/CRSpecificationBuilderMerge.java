@@ -27,14 +27,14 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
         if (isProcessed(entity, specification)) {
             return;
         }
-        Datatype<V> datatype = vem.getSchema().datatype(entity);
-        for (Parameter<V> parameter : datatype.collections().values()) {
+        Datatype<V> datatype = vem.getSchema().getDatatype(entity);
+        for (Parameter<V> parameter : datatype.getCollections().values()) {
             defineCollectionOperations(entity, vem, specification, parameter);
             for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
                 process(leaf, vem, specification);
             }
         }
-        for (Parameter<V> parameter : datatype.references().values()) {
+        for (Parameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
@@ -63,9 +63,9 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
 
         if (newLeaf == null) {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaf.get());
-            parameterDatatype.primitive("version").set(leaf, new Version(VersionState.PURGE, 0));
-            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
-            parameterDatatype.reference("parent").set(leaf, null);
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, 0));
+            parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.getReference("parent").set(leaf, null);
             specification.getUnits().add(new CRSpecificationUnitDTO(
                     ChangeOperation.REFERENCE_NULLIFY,
                     leaf
@@ -79,9 +79,9 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
             return;
         } else {
             Leaf<?> leaf = newLeaf;
-            parameterDatatype.primitive("version").set(leaf, new Version(VersionState.DRAFT, 0));
-            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
-            parameterDatatype.reference("parent").set(leaf, null);
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.DRAFT, 0));
+            parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.getReference("parent").set(leaf, null);
             specification.getUnits().add(new CRSpecificationUnitDTO(
                     ChangeOperation.REFERENCE_REPLACE,
                     leaf
@@ -93,6 +93,17 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
                     ChangeOperation.REMOVE
             );*/
         }
+    }
+
+    private boolean isGloballyEqual(Optional<Leaf<?>> newLeaf, Optional<Leaf<?>> oldLeaf, Datatype<Leaf<?>> datatype) {
+        if (newLeaf.isEmpty() && oldLeaf.isEmpty())
+            return true;
+        if (newLeaf.isPresent() && oldLeaf.isPresent()) {
+            Object newLeafUuid = datatype.getGlobalIdentifier().get(newLeaf.get());
+            Object oldLeafUuid = datatype.getGlobalIdentifier().get(oldLeaf.get());
+            return newLeafUuid.equals(oldLeafUuid);
+        }
+        return false;
     }
 
     private <T extends Root, V extends Versionable>
@@ -117,9 +128,9 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
         removeIndex.removeAll(newLeaves.keySet());
         removeIndex.forEach(uuid -> {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaves.get(uuid));
-            parameterDatatype.primitive("version").set(leaf, new Version(VersionState.PURGE, 0));
-            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
-            parameterDatatype.reference("parent").set(leaf, null);
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, 0));
+            parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.getReference("parent").set(leaf, null);
 
             specification.getUnits().add(new CRSpecificationUnitDTO(
                     ChangeOperation.COLLECTION_REMOVE,
@@ -142,8 +153,8 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
                     ChangeOperation.COLLECTION_ADD,
                     leaf
             ));
-            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
-            parameterDatatype.reference("parent").set(leaf, null);
+            parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.getReference("parent").set(leaf, null);
             /*CRSUtil.defineChangeOperationCascade(
                     leaf,
                     vem,

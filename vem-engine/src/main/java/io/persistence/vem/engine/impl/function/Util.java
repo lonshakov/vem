@@ -18,11 +18,11 @@ import java.util.function.BiConsumer;
 public class Util {
     public static <T extends Root, V extends Versionable>
     void defineChangeOperationCascade(V entity, VersioningEntityManager vem, ChangeRequestSpecification<T> specification, ChangeOperation operation) {
-        Datatype<V> datatype = vem.getSchema().datatype(entity);
+        Datatype<V> datatype = vem.getSchema().getDatatype(entity);
         Serializable parentUuid = entity.getUuid();
 
         //collections
-        for (Parameter<V> parameter : datatype.collections().values()) {
+        for (Parameter<V> parameter : datatype.getCollections().values()) {
             Datatype<Leaf<?>> parameterDatatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
 
             for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
@@ -30,7 +30,7 @@ public class Util {
                         operation,
                         leaf
                 ));
-                parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
+                parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
                 defineChangeOperationCascade(
                         leaf,
                         vem,
@@ -41,7 +41,7 @@ public class Util {
         }
 
         //references
-        for (Parameter<V> parameter : datatype.references().values()) {
+        for (Parameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
@@ -54,7 +54,7 @@ public class Util {
                     operation,
                     leaf
             ));
-            parameterDatatype.primitive("parentUuid").set(leaf, parentUuid);
+            parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             defineChangeOperationCascade(
                     leaf,
                     vem,
@@ -65,18 +65,18 @@ public class Util {
     }
 
     public static <V extends Persistable> void walk(V entity, VisitorContextImpl ctx, BiConsumer<Persistable, VisitorContext> task) {
-        Datatype<V> datatype = ctx.vem().getSchema().datatype(entity);
+        Datatype<V> datatype = ctx.vem().getSchema().getDatatype(entity);
         if (ctx.isVisited(entity))
             return;
 
-        for (Parameter<V> parameter : datatype.collections().values()) {
+        for (Parameter<V> parameter : datatype.getCollections().values()) {
             Axis<Persistable> axis = (Axis<Persistable>) new Axis<>(entity, parameter);
             for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
                 ctx.register(leaf, axis);
                 walk(leaf, ctx, task);
             }
         }
-        for (Parameter<V> parameter : datatype.references().values()) {
+        for (Parameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
@@ -127,7 +127,8 @@ public class Util {
             Axis<GlobalEntity> axis = ctx.getAxis(obj);
             Serializable parentUuid = (Serializable) axis.getParameter()
                     .getStructureDatatype()
-                    .primitive("uuid").get(axis.getParent());
+                    .getGlobalIdentifier()
+                    .get(axis.getParent());
 
             Parameter<?> parameter = ctx.getAxis(obj).getParameter();
             Datatype<Object> parameterDatatype = (Datatype<Object>) parameter.getParameterDatatype();
@@ -135,7 +136,7 @@ public class Util {
                     operation,
                     (Leaf<?>) obj
             ));
-            parameterDatatype.primitive("parentUuid").set(obj, parentUuid);
+            parameterDatatype.getPrimitive("parentUuid").set(obj, parentUuid);
         });
     }
 }

@@ -1,5 +1,6 @@
 package io.persistence.vem.engine.impl.function;
 
+import io.persistence.vem.domain.model.GlobalEntity;
 import io.persistence.vem.domain.model.Persistable;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Schema;
@@ -17,17 +18,20 @@ public class Cloner {
         if (existed != null)
             return existed;
 
-        Datatype<T> datatype = schema.datatype(entity);
+        Datatype<T> datatype = schema.getDatatype(entity);
         T clone = datatype.instantiate();
         components.put(entity, clone);
 
         //copy primitives
-        datatype.primitives().values().stream().filter(p -> !p.getName().equals("version")).forEach(parameter -> {
+        datatype.getPrimitives().values().stream().filter(p -> !p.getName().equals("version")).forEach(parameter -> {
             parameter.set(clone, parameter.get(entity));
         });
+        if (datatype.isGlobal()) {
+            datatype.getGlobalIdentifier().set(clone, ((GlobalEntity) entity).getUuid());
+        }
 
         //copy collections
-        datatype.collections().values().forEach(parameter -> {
+        datatype.getCollections().values().forEach(parameter -> {
             List<Persistable> cloneCollection = ((Collection<Persistable>) parameter.get(entity))
                     .stream()
                     .map(leaf -> clone(leaf, schema))
@@ -36,7 +40,7 @@ public class Cloner {
         });
 
         //copy references
-        datatype.references().values().stream().forEach(parameter -> {
+        datatype.getReferences().values().stream().forEach(parameter -> {
             Persistable leaf = (Persistable) parameter.get(entity);
             if (leaf != null) {
                 Persistable cloneReference = clone(leaf, schema);

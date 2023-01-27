@@ -19,18 +19,18 @@ public class Persister implements PersistenceProcessor {
     @Override
     public <T extends Root, R extends ChangeRequest<T>, V extends Versionable>
     void process(V entity, R request, VersioningEntityManager vem) {
-        Datatype<V> datatype = vem.getSchema().datatype(entity);
+        Datatype<V> datatype = vem.getSchema().getDatatype(entity);
         Serializable parentUuid = entity.getUuid();
 
-        for (Parameter<V> parameter : datatype.collections().values()) {
+        for (Parameter<V> parameter : datatype.getCollections().values()) {
             for (Leaf<Versionable> leaf : (Iterable<Leaf<Versionable>>) parameter.get(entity)) {
-                vem.getSchema().datatype(leaf).primitive("parentUuid").set(leaf, parentUuid);
+                vem.getSchema().getDatatype(leaf).getPrimitive("parentUuid").set(leaf, parentUuid);
                 bind(request, leaf, vem);
                 process(leaf, request, vem);
             }
         }
 
-        for (Parameter<V> parameter : datatype.references().values()) {
+        for (Parameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
@@ -38,7 +38,7 @@ public class Persister implements PersistenceProcessor {
             if (leaf == null) {
                 continue;
             }
-            vem.getSchema().datatype(leaf).primitive("parentUuid").set(leaf, parentUuid);
+            vem.getSchema().getDatatype(leaf).getPrimitive("parentUuid").set(leaf, parentUuid);
             bind(request, leaf, vem);
             process(leaf, request, vem);
         }

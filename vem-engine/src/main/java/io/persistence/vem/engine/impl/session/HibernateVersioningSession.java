@@ -67,7 +67,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> ChangeRequest<T> merge(T entity) {
-        T clone = getSchema().datatype(entity).clone(entity);
+        T clone = getSchema().getDatatype(entity).clone(entity);
         cascade(entity, (obj, ctx) -> em().detach(obj));
         ChangeRequestSpecification<T> crs = new CRSpecificationBuilderMerge().build(clone, this);
 
@@ -101,7 +101,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     @Override
     public <T extends Root> void publish(ChangeRequest<T> request) {
         checkRequestBeforeUpdate(request, "publish", ChangeState.DRAFT);
-        getSchema().datatype(request).primitive("state").set(request, ChangeState.PUBLISHED);
+        getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.PUBLISHED);
         em.persist(request);
     }
 
@@ -112,7 +112,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
         T root = request.getRoot();
         if (root.getVersion().getState().equals(VersionState.DRAFT)) {
-            getSchema().datatype(root).primitive("version").set(root, new Version(VersionState.ACTIVE, 0));
+            getSchema().getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, 0));
             em.persist(request.getRoot());
         }
 
@@ -125,14 +125,14 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         });
 
         getChanger().getStoredChangeUnits(request).forEach(em::persist);
-        getSchema().datatype(request).primitive("state").set(request, ChangeState.AFFIRMED);
+        getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.AFFIRMED);
         em.persist(request);
     }
 
     @Override
     public <T extends Root> void reject(ChangeRequest<T> request) {
         checkRequestBeforeUpdate(request, "reject", ChangeState.PUBLISHED);
-        getSchema().datatype(request).primitive("state").set(request, ChangeState.REJECTED);
+        getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.REJECTED);
         em.persist(request);
     }
 
@@ -163,9 +163,12 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> query = cb.createQuery(type);
         javax.persistence.criteria.Root<T> root = query.from(type);
-        query.select(root).where(cb.equal(root.get("uuid"), uuid));
-        List<T> result = em.createQuery(query).getResultList();
+        query.select(root).where(cb.equal(
+                root.get(getSchema().getDatatype(type).getGlobalIdentifier().getName()),
+                uuid
+        ));
 
+        List<T> result = em.createQuery(query).getResultList();
         return switch (result.size()) {
             case 0 -> null;
             case 1 -> result.get(0);
@@ -223,11 +226,11 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         Versionable parent = leaf.getVersion().getState().equals(VersionState.ACTIVE)
                 ? em.createQuery(getActiveParentQuery(leaf)).getSingleResult()
                 : null;
-        getSchema().datatype(leaf).reference("parent").set(leaf, parent);
+        getSchema().getDatatype(leaf).getReference("parent").set(leaf, parent);
     }
 
     private <T extends Leaf<P>, P extends Versionable> void processHistoryIncrement(ChangeOperation operation, T leaf, long versionDate) {
-        Datatype<T> datatype = getSchema().datatype(leaf);
+        Datatype<T> datatype = getSchema().getDatatype(leaf);
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         Class<T> type = (Class<T>) leaf.getClass();
@@ -239,12 +242,12 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         switch (operation) {
             case COLLECTION_REMOVE -> {
                 query.select(root).where(
-                        cb.equal(root.get("uuid"), leaf.getUuid()),
+                        cb.equal(root.get(datatype.getGlobalIdentifier().getName()), leaf.getUuid()),
                         cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
-                    datatype.primitive("version").set(active, new Version(VersionState.HISTORY, 0));
-                    datatype.reference("parent").set(active, null);
+                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, 0));
+                    datatype.getReference("parent").set(active, null);
                     em.persist(active);
                 });
             }
@@ -257,8 +260,8 @@ public class HibernateVersioningSession implements VersioningEntityManager {
                         cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
-                    datatype.primitive("version").set(active, new Version(VersionState.HISTORY, 0));
-                    datatype.reference("parent").set(active, null);
+                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, 0));
+                    datatype.getReference("parent").set(active, null);
                     em.persist(active);
                 });
             }
@@ -268,12 +271,12 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             case COLLECTION_ADD, REFERENCE_REPLACE, GRAPH_CREATE -> VersionState.ACTIVE;
             case COLLECTION_REMOVE, REFERENCE_NULLIFY -> VersionState.PASSIVE;
         };
-        datatype.primitive("version").set(leaf, new Version(state, 0));
+        datatype.getPrimitive("version").set(leaf, new Version(state, 0));
     }
 
     private <T extends Leaf<P>, P extends Versionable> CriteriaQuery<P> getActiveParentQuery(T entity) {
-        Datatype<T> datatype = getSchema().datatype(entity);
-        Parameter<T> parent = datatype.reference("parent");
+        Datatype<T> datatype = getSchema().getDatatype(entity);
+        Parameter<T> parent = datatype.getReference("parent");
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         Class<P> type = (Class<P>) parent.getParameterDatatype().getJavaType();
@@ -282,7 +285,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         javax.persistence.criteria.Root<P> root = query.from(type);
 
         query.select(root).where(
-                cb.equal(root.get("uuid"), entity.getParentUuid()),
+                cb.equal(root.get(datatype.getGlobalIdentifier().getName()), entity.getParentUuid()),
                 cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
         );
 
