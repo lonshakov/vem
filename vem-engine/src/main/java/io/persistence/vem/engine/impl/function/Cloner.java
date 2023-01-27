@@ -1,6 +1,5 @@
 package io.persistence.vem.engine.impl.function;
 
-import io.persistence.vem.domain.model.GlobalEntity;
 import io.persistence.vem.domain.model.Persistable;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Schema;
@@ -27,7 +26,7 @@ public class Cloner {
             parameter.set(clone, parameter.get(entity));
         });
         if (datatype.isGlobal()) {
-            datatype.getGlobalIdentifier().set(clone, ((GlobalEntity) entity).getUuid());
+            datatype.getGlobalIdentifier().set(clone, schema.getUtil().getUuid(entity));
         }
 
         //copy collections

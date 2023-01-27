@@ -19,7 +19,7 @@ public class Util {
     public static <T extends Root, V extends Versionable>
     void defineChangeOperationCascade(V entity, VersioningEntityManager vem, ChangeRequestSpecification<T> specification, ChangeOperation operation) {
         Datatype<V> datatype = vem.getSchema().getDatatype(entity);
-        Serializable parentUuid = entity.getUuid();
+        Serializable parentUuid = vem.getSchema().getUtil().getUuid(entity);
 
         //collections
         for (Parameter<V> parameter : datatype.getCollections().values()) {

@@ -44,8 +44,8 @@ public class HibernateVersioningSession implements VersioningEntityManager {
 
     @Override
     public <T extends Root> ChangeRequest<T> persist(T entity) {
-        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderCascade(ChangeOperation.GRAPH_CREATE)
-                .build(entity, this);
+        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderCascade<T>(ChangeOperation.GRAPH_CREATE, this)
+                .build(null, entity);
 
         return persist(crs);
     }
@@ -69,7 +69,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     public <T extends Root> ChangeRequest<T> merge(T entity) {
         T clone = getSchema().getDatatype(entity).clone(entity);
         cascade(entity, (obj, ctx) -> em().detach(obj));
-        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderMerge().build(clone, this);
+        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderMerge<T>(this).build(null, clone);
 
         return merge(crs);
     }
@@ -78,10 +78,13 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     public <T extends Root> ChangeRequest<T> merge(ChangeRequestSpecification<T> specification) {
         Objects.requireNonNull(specification);
 
-        T entity = findNonNull((Class<T>) specification.getRoot().getClass(), specification.getRoot().getUuid());
+        T entity = findNonNull(
+                (Class<T>) specification.getRoot().getClass(),
+                getUuid(specification.getRoot())
+        );
 
         ChangeRequest<T> request;
-        if (specification.getId() == null) {
+        if (specification.getUuid() == null) {
             request = getChanger().createChangeRequest(entity);
             em.persist(request);
         } else {
@@ -242,7 +245,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         switch (operation) {
             case COLLECTION_REMOVE -> {
                 query.select(root).where(
-                        cb.equal(root.get(datatype.getGlobalIdentifier().getName()), leaf.getUuid()),
+                        cb.equal(root.get(datatype.getGlobalIdentifier().getName()), getUuid(leaf)),
                         cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
@@ -300,5 +303,9 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         if (entity == null)
             throw new VersioningException("no data found - " + type.getSimpleName() + "(" + uuid + ")");
         return entity;
+    }
+
+    private <T extends GlobalEntity> Serializable getUuid(T entity) {
+        return getSchema().getUtil().getUuid(entity);
     }
 }

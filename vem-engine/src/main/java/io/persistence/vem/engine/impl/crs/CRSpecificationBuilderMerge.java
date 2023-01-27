@@ -15,52 +15,61 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBuilder {
+public class CRSpecificationBuilderMerge<T extends Root> implements ChangeRequestSpecificationBuilder<T> {
+    private VersioningEntityManager vem;
+    private ChangeRequestSpecification<T> specification;
+    private Set<Serializable> passedUuids = new HashSet<>();
+
+    public CRSpecificationBuilderMerge(VersioningEntityManager vem) {
+        this.vem = vem;
+    }
+
     @Override
-    public <T extends Root> ChangeRequestSpecification<T> build(T root, VersioningEntityManager vem) {
-        ChangeRequestSpecification<T> specification = new CRSpecificationDTO<>(root);
-        process(root, vem, specification);
+    public ChangeRequestSpecification<T> build(Serializable uuid, T root) {
+        this.vem = vem;
+        specification = new CRSpecificationDTO<>(uuid, root);
+        process(root);
         return specification;
     }
 
-    <T extends Root, V extends Versionable> void process(V entity, VersioningEntityManager vem, ChangeRequestSpecification<T> specification) {
-        if (isProcessed(entity, specification)) {
+    <V extends Versionable> void process(V entity) {
+        Serializable entityUuid = vem.getSchema().getUtil().getUuid(entity);
+        if (passedUuids.contains(entityUuid))
             return;
-        }
+        passedUuids.add(entityUuid);
+
         Datatype<V> datatype = vem.getSchema().getDatatype(entity);
         for (Parameter<V> parameter : datatype.getCollections().values()) {
-            defineCollectionOperations(entity, vem, specification, parameter);
+            defineCollectionOperations(entity, parameter);
             for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
-                process(leaf, vem, specification);
+                process(leaf);
             }
         }
         for (Parameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
-            defineReferenceOperation(entity, vem, specification, parameter);
+            defineReferenceOperation(entity, parameter);
             Leaf<?> leaf = (Leaf<?>) parameter.get(entity);
             if (leaf != null) {
-                process(leaf, vem, specification);
+                process(leaf);
             }
         }
     }
 
-    private <T extends Root, V extends Versionable>
-    void defineReferenceOperation(V entity, VersioningEntityManager vem, ChangeRequestSpecification<T> specification, Parameter<V> parameter) {
+    private <V extends Versionable> void defineReferenceOperation(V entity, Parameter<V> parameter) {
         Datatype<Leaf<?>> parameterDatatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
-        Serializable parentUuid = entity.getUuid();
+        Serializable parentUuid = vem.getSchema().getUtil().getUuid(entity);
 
         Leaf<?> newLeaf = (Leaf<?>) parameter.get(entity);
         Class<Leaf<?>> type = parameterDatatype.getJavaType();
 
-        Optional<Leaf<?>> oldLeaf = fetchByParent(vem.em(), type, entity).stream().findFirst();
+        Optional<Leaf<?>> oldLeaf = fetchByParentUuid(vem.em(), type, parentUuid).stream().findFirst();
 
         if ((newLeaf == null && oldLeaf.isEmpty())
-                || newLeaf != null && oldLeaf.isPresent() && newLeaf.getUuid().equals(oldLeaf.get().getUuid())) {
+                || oldLeaf.isPresent() && vem.getSchema().getUtil().equals(oldLeaf.get(), newLeaf)) {
             return;
         }
-
         if (newLeaf == null) {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaf.get());
             parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, 0));
@@ -70,13 +79,6 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
                     ChangeOperation.REFERENCE_NULLIFY,
                     leaf
             ));
-            /*CRSUtil.defineChangeOperationCascade(
-                    leaf,
-                    vem,
-                    specification,
-                    ChangeOperation.REMOVE
-            );*/
-            return;
         } else {
             Leaf<?> leaf = newLeaf;
             parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.DRAFT, 0));
@@ -86,42 +88,23 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
                     ChangeOperation.REFERENCE_REPLACE,
                     leaf
             ));
-            /*CRSUtil.defineChangeOperationCascade(
-                    leaf,
-                    vem,
-                    specification,
-                    ChangeOperation.REMOVE
-            );*/
         }
     }
 
-    private boolean isGloballyEqual(Optional<Leaf<?>> newLeaf, Optional<Leaf<?>> oldLeaf, Datatype<Leaf<?>> datatype) {
-        if (newLeaf.isEmpty() && oldLeaf.isEmpty())
-            return true;
-        if (newLeaf.isPresent() && oldLeaf.isPresent()) {
-            Object newLeafUuid = datatype.getGlobalIdentifier().get(newLeaf.get());
-            Object oldLeafUuid = datatype.getGlobalIdentifier().get(oldLeaf.get());
-            return newLeafUuid.equals(oldLeafUuid);
-        }
-        return false;
-    }
-
-    private <T extends Root, V extends Versionable>
-    void defineCollectionOperations(V entity, VersioningEntityManager
-            vem, ChangeRequestSpecification<T> specification, Parameter<V> parameter) {
+    private <V extends Versionable> void defineCollectionOperations(V entity, Parameter<V> parameter) {
         Datatype<Leaf<?>> parameterDatatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
         Class<Leaf<?>> type = parameterDatatype.getJavaType();
-        Serializable parentUuid = entity.getUuid();
+        Serializable parentUuid = vem.getSchema().getUtil().getUuid(entity);
 
         //old values
-        Map<Serializable, Leaf<?>> oldLeaves = fetchByParent(vem.em(), type, entity)
+        Map<Serializable, Leaf<?>> oldLeaves = fetchByParentUuid(vem.em(), type, parentUuid)
                 .stream()
-                .collect(Collectors.toMap(GlobalEntity::getUuid, o -> o));
+                .collect(Collectors.toMap(o -> vem.getSchema().getUtil().getUuid(o), o -> o));
 
         //new values
         Map<Serializable, Leaf<?>> newLeaves = ((Collection<Leaf<?>>) parameter.get(entity))
                 .stream()
-                .collect(Collectors.toMap(GlobalEntity::getUuid, o -> o));
+                .collect(Collectors.toMap(o -> vem.getSchema().getUtil().getUuid(o), o -> o));
 
         //remove
         Set<Serializable> removeIndex = new HashSet<>(oldLeaves.keySet());
@@ -136,12 +119,6 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
                     ChangeOperation.COLLECTION_REMOVE,
                     leaf
             ));
-            /*CRSUtil.defineChangeOperationCascade(
-                    leaf,
-                    vem,
-                    specification,
-                    ChangeOperation.REMOVE
-            );*/
         });
 
         //add
@@ -155,30 +132,16 @@ public class CRSpecificationBuilderMerge implements ChangeRequestSpecificationBu
             ));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
-            /*CRSUtil.defineChangeOperationCascade(
-                    leaf,
-                    vem,
-                    specification,
-                    ChangeOperation.ADD
-            );*/
         });
     }
 
-    <T extends Versionable> List<T> fetchByParent(EntityManager em, Class<T> type, Versionable parent) {
+    <T extends Versionable> List<T> fetchByParentUuid(EntityManager em, Class<T> type, Serializable parentUuid) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> query = cb.createQuery(type);
         javax.persistence.criteria.Root<T> root = query.from(type);
         query.select(root).where(
-                cb.equal(root.get("parentUuid"), parent.getUuid()),
+                cb.equal(root.get("parentUuid"), parentUuid),
                 cb.equal(root.get("version").get("state"), VersionState.ACTIVE));
         return em.createQuery(query).getResultList();
-    }
-
-    private <T extends Root, V extends Versionable> boolean isProcessed(V
-                                                                                entity, ChangeRequestSpecification<T> specification) {
-        return entity instanceof Leaf<?>
-                && specification
-                .getUnits()
-                .contains(new CRSpecificationUnitDTO(null, (Leaf<?>) entity));
     }
 }

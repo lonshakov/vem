@@ -4,26 +4,20 @@ import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CRSpecificationDTO<T extends Root> implements ChangeRequestSpecification<T> {
-    private Serializable id;
     private Serializable uuid;
     private T root;
-    private Set<Unit> units = new HashSet<>();
+    private List<Unit> units = new ArrayList<>();
 
-    public CRSpecificationDTO(T root) {
-        this.uuid = root.getUuid();
+    public CRSpecificationDTO(Serializable uuid, T root) {
+        this.uuid = uuid;
         this.root = root;
     }
 
     public CRSpecificationDTO() {
-    }
-
-    @Override
-    public Serializable getId() {
-        return id;
     }
 
     @Override
@@ -37,7 +31,7 @@ public class CRSpecificationDTO<T extends Root> implements ChangeRequestSpecific
     }
 
     @Override
-    public Set<Unit> getUnits() {
+    public List<Unit> getUnits() {
         return units;
     }
 }

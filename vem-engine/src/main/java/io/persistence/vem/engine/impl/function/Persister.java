@@ -20,7 +20,7 @@ public class Persister implements PersistenceProcessor {
     public <T extends Root, R extends ChangeRequest<T>, V extends Versionable>
     void process(V entity, R request, VersioningEntityManager vem) {
         Datatype<V> datatype = vem.getSchema().getDatatype(entity);
-        Serializable parentUuid = entity.getUuid();
+        Serializable parentUuid = vem.getSchema().getUtil().getUuid(entity);
 
         for (Parameter<V> parameter : datatype.getCollections().values()) {
             for (Leaf<Versionable> leaf : (Iterable<Leaf<Versionable>>) parameter.get(entity)) {

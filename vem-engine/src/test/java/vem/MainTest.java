@@ -233,7 +233,7 @@ public class MainTest {
             Parcel parcel = new Parcel("patches");
             parcel.setParentUuid(store.getUuid());
 
-            ChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(store);
+            ChangeRequestSpecification<Store> crs = new CRSpecificationDTO<>(null, store);
             crs.getUnits().add(new CRSpecificationUnitDTO(ChangeOperation.COLLECTION_ADD, body));
             crs.getUnits().add(new CRSpecificationUnitDTO(ChangeOperation.COLLECTION_ADD, parcel));
 

@@ -7,16 +7,20 @@ import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.request.ChangeRequestSpecificationBuilder;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 
-public class CRSpecificationBuilderCascade implements ChangeRequestSpecificationBuilder {
-    private final ChangeOperation operation;
+import java.io.Serializable;
 
-    public CRSpecificationBuilderCascade(ChangeOperation operation) {
+public class CRSpecificationBuilderCascade<T extends Root> implements ChangeRequestSpecificationBuilder<T> {
+    private final ChangeOperation operation;
+    private final VersioningEntityManager vem;
+
+    public CRSpecificationBuilderCascade(ChangeOperation operation, VersioningEntityManager vem) {
+        this.vem = vem;
         this.operation = operation;
     }
 
     @Override
-    public <T extends Root> ChangeRequestSpecification<T> build(T root, VersioningEntityManager vem) {
-        ChangeRequestSpecification<T> specification = new CRSpecificationDTO<>(root);
+    public ChangeRequestSpecification<T> build(Serializable uuid, T root) {
+        ChangeRequestSpecification<T> specification = new CRSpecificationDTO<>(uuid, root);
         Util.defineChangeOperationCascade(root, vem, specification, operation);
         return specification;
     }
