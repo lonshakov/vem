@@ -5,7 +5,7 @@ import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.domain.model.VersionState;
 import io.persistence.vem.domain.model.Versionable;
 import io.persistence.vem.domain.request.ChangeRequest;
-import io.persistence.vem.spi.GraphBinder;
+import io.persistence.vem.spi.function.GraphBinder;
 import io.persistence.vem.spi.request.Changer;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
@@ -33,6 +33,7 @@ public class GraphBinderImpl implements GraphBinder {
                 processGraphBinding(unit.getLeaf())
         );
     }
+
     private <T extends Leaf<P>, P extends Versionable> void processGraphBinding(T leaf) {
         Versionable parent = leaf.getVersion().getState().equals(VersionState.ACTIVE)
                 ? em.createQuery(getActiveParentQuery(leaf)).getSingleResult()

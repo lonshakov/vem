@@ -1,6 +1,6 @@
 package io.persistence.vem.engine.impl.session;
 
-import io.persistence.vem.domain.model.*;
+import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.domain.request.ChangeRequest;
 import io.persistence.vem.domain.request.ChangeState;
@@ -11,8 +11,8 @@ import io.persistence.vem.engine.impl.function.GraphBinderImpl;
 import io.persistence.vem.engine.impl.function.HistoryRecorderImpl;
 import io.persistence.vem.engine.impl.function.Util;
 import io.persistence.vem.engine.impl.request.ChangerImpl;
-import io.persistence.vem.spi.GraphBinder;
-import io.persistence.vem.spi.HistoryRecorder;
+import io.persistence.vem.spi.function.GraphBinder;
+import io.persistence.vem.spi.function.HistoryRecorder;
 import io.persistence.vem.spi.VersioningException;
 import io.persistence.vem.spi.context.SessionContext;
 import io.persistence.vem.spi.function.VisitorContext;
@@ -25,7 +25,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -110,31 +109,25 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     public <T extends Root> void publish(ChangeRequest<T> request) {
         checkRequestBeforeUpdate(request, "publish", ChangeState.DRAFT);
         getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.PUBLISHED);
-        em.persist(request);
+        em.merge(request);
     }
 
     @Override
     public <T extends Root> void affirm(ChangeRequest<T> request) {
         checkRequestBeforeUpdate(request, "affirm", ChangeState.PUBLISHED);
-        LocalDateTime versionDate = LocalDateTime.now();
 
-        T root = request.getRoot();
-        if (root.getVersion().getState().equals(VersionState.DRAFT)) {
-            getSchema().getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, LocalDateTime.MIN));
-            em.persist(request.getRoot());
-        }
         historyRecorder.record(request);
         graphBinder.bind(request);
 
         getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.AFFIRMED);
-        em.persist(request);
+        em.merge(request);
     }
 
     @Override
     public <T extends Root> void reject(ChangeRequest<T> request) {
         checkRequestBeforeUpdate(request, "reject", ChangeState.PUBLISHED);
         getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.REJECTED);
-        em.persist(request);
+        em.merge(request);
     }
 
     @Override

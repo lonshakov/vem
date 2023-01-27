@@ -1,4 +1,4 @@
-package io.persistence.vem.spi;
+package io.persistence.vem.spi.function;
 
 import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.domain.request.ChangeRequest;

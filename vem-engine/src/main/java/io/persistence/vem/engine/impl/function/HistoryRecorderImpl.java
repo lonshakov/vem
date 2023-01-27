@@ -3,7 +3,7 @@ package io.persistence.vem.engine.impl.function;
 import io.persistence.vem.domain.model.*;
 import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.domain.request.ChangeRequest;
-import io.persistence.vem.spi.HistoryRecorder;
+import io.persistence.vem.spi.function.HistoryRecorder;
 import io.persistence.vem.spi.request.Changer;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Schema;
@@ -26,17 +26,24 @@ public class HistoryRecorderImpl implements HistoryRecorder {
     }
 
     public <T extends Root> void record(ChangeRequest<T> request) {
-        LocalDateTime versionDate = LocalDateTime.now();
+        LocalDateTime dateTime = LocalDateTime.now();
+
+        T root = request.getRoot();
+        if (root.getVersion().getState().equals(VersionState.DRAFT)) {
+            schema.getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, dateTime));
+            em.merge(request.getRoot());
+        }
+
         changer.stream(request, false).forEach(unit -> {
             markHistory(
                     unit.getOperation(),
                     unit.getLeaf(),
-                    versionDate
+                    dateTime
             );
             markActual(
                     unit.getOperation(),
                     unit.getLeaf(),
-                    versionDate
+                    dateTime
             );
         });
     }
