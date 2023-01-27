@@ -43,7 +43,7 @@ public class ChangerImpl implements Changer {
         ChangeUnit<ChangeRequest<T>> unit = getUnitDatatype(request.getRoot()).instantiate();
         Datatype<ChangeUnit<ChangeRequest<T>>> datatype = vem.getSchema().getDatatype(unit);
         datatype.getReference("request").set(unit, request);
-        datatype.getPrimitive("leaf").set(unit, new PolymorphEntity(leaf.getClass(), leaf.getId()));
+        datatype.getPrimitive("leaf").set(unit, new PolymorphEntity(leaf.getClass(), vem.getSchema().getUtil().getId(leaf)));
         datatype.getPrimitive("operation").set(unit, operation);
         return unit;
     }
@@ -77,7 +77,7 @@ public class ChangerImpl implements Changer {
 
         Iterator<ChangeRequestSpecification.Unit> iterator = lazy
                 ? units.stream().map(u -> fetch(u, true)).iterator()
-                : new BatchUnitIterator(units, vem.em());
+                : new BatchUnitIterator(units, vem);
 
         return StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),

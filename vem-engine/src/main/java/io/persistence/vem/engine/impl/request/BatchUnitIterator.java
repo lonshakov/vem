@@ -8,6 +8,7 @@ import io.persistence.vem.domain.request.ChangeRequest;
 import io.persistence.vem.domain.request.ChangeUnit;
 import io.persistence.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
+import io.persistence.vem.spi.session.VersioningEntityManager;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -19,14 +20,14 @@ import java.util.stream.Collectors;
 public class BatchUnitIterator implements Iterator<ChangeRequestSpecification.Unit> {
     private final Iterator<Map.Entry<Class<?>, List<ChangeUnit<?>>>> batchIterator;
     private Iterator<ChangeRequestSpecification.Unit> unitIterator = Collections.emptyIterator();
-    private final EntityManager em;
+    private final VersioningEntityManager vem;
 
-    public <T extends Root> BatchUnitIterator(Collection<ChangeUnit<ChangeRequest<T>>> units, EntityManager em) {
+    public <T extends Root> BatchUnitIterator(Collection<ChangeUnit<ChangeRequest<T>>> units, VersioningEntityManager vem) {
         Map<Class<?>, List<ChangeUnit<?>>> source = units
                 .stream()
                 .collect(Collectors.groupingBy(o -> o.getLeaf().getType()));
         this.batchIterator = source.entrySet().iterator();
-        this.em = em;
+        this.vem = vem;
     }
 
     @Override
@@ -53,7 +54,7 @@ public class BatchUnitIterator implements Iterator<ChangeRequestSpecification.Un
 
             Map<Serializable, Leaf<?>> leaves = fetchBatch(type, identifiers)
                     .stream()
-                    .collect(Collectors.toMap(Persistable::getId, leaf -> leaf));
+                    .collect(Collectors.toMap(leaf -> vem.getSchema().getUtil().getId(leaf), leaf -> leaf));
 
             unitIterator = identifiers.stream().map(id -> (ChangeRequestSpecification.Unit) new CRSpecificationUnitDTO(
                     operations.get(id),
@@ -63,11 +64,11 @@ public class BatchUnitIterator implements Iterator<ChangeRequestSpecification.Un
     }
 
     private List<Leaf<?>> fetchBatch(Class<Leaf<?>> type, Set<Serializable> identifiers) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaBuilder cb = vem.em().getCriteriaBuilder();
         CriteriaQuery<Leaf<?>> query = cb.createQuery(type);
         javax.persistence.criteria.Root<Leaf<?>> root = query.from(type);
         query.select(root)
                 .where(root.get("id").in(identifiers));
-        return em.createQuery(query).getResultList();
+        return vem.em().createQuery(query).getResultList();
     }
 }

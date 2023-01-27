@@ -46,7 +46,7 @@ public class Persister implements PersistenceProcessor {
 
     private <T extends Root> void bind(ChangeRequest<T> request, Leaf<?> leaf, VersioningEntityManager vem) {
         if (VersionState.DRAFT.equals(leaf.getVersion().getState())) {
-            ChangeOperation operation = getOperation(leaf);
+            ChangeOperation operation = getOperation(leaf, vem);
             vem.em().persist(leaf);
 
             ChangeUnit<ChangeRequest<T>> unit = vem.getChanger().createChangeUnit(request, leaf, operation);
@@ -54,8 +54,8 @@ public class Persister implements PersistenceProcessor {
         }
     }
 
-    private ChangeOperation getOperation(Leaf<?> leaf) {
-        if (leaf.getId() == null) {
+    private ChangeOperation getOperation(Leaf<?> leaf, VersioningEntityManager vem) {
+        if (vem.getSchema().getUtil().getId(leaf) == null) {
             return ChangeOperation.COLLECTION_ADD;
         }
         if (leaf.getParent() == null && leaf.getParentUuid() != null) {
