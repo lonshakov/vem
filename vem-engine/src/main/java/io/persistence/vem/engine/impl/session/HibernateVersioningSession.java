@@ -180,7 +180,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T extends Persistable> void cascade(T entity, BiConsumer<Persistable, VisitorContext> task) {
+    public <T> void cascade(T entity, BiConsumer<Object, VisitorContext> task) {
         Util.VisitorContextImpl ctx = new Util.VisitorContextImpl(this);
         Util.walk(entity, ctx, task);
     }

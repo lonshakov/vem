@@ -1,6 +1,5 @@
 package io.persistence.vem.engine.impl.function;
 
-import io.persistence.vem.domain.model.Persistable;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Schema;
 
@@ -31,20 +30,19 @@ public class Cloner {
 
         //copy collections
         datatype.getCollections().values().forEach(parameter -> {
-            List<Persistable> cloneCollection = ((Collection<Persistable>) parameter.get(entity))
+            List<Object> cloneCollection = ((Collection<Object>) parameter.get(entity))
                     .stream()
                     .map(leaf -> clone(leaf, schema))
                     .toList();
-            ((Collection<Persistable>) parameter.get(clone)).addAll(cloneCollection);
+            ((Collection<Object>) parameter.get(clone)).addAll(cloneCollection);
         });
 
         //copy references
-        datatype.getReferences().values().stream().forEach(parameter -> {
-            Persistable leaf = (Persistable) parameter.get(entity);
-            if (leaf != null) {
-                Persistable cloneReference = clone(leaf, schema);
+        datatype.getReferences().values().forEach(parameter -> {
+            Object reference = parameter.get(entity);
+            if (reference != null) {
+                Object cloneReference = clone(reference, schema);
                 parameter.set(clone, cloneReference);
-                //wire(leaf, clone, parameter);
             }
         });
         return clone;

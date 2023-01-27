@@ -1,7 +1,6 @@
 package io.persistence.vem.engine.impl.request;
 
 import io.persistence.vem.domain.model.Leaf;
-import io.persistence.vem.domain.model.Persistable;
 import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.domain.request.ChangeRequest;
@@ -10,7 +9,6 @@ import io.persistence.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 
-import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import java.io.Serializable;

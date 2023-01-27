@@ -64,13 +64,13 @@ public class Util {
         }
     }
 
-    public static <V extends Persistable> void walk(V entity, VisitorContextImpl ctx, BiConsumer<Persistable, VisitorContext> task) {
+    public static <V> void walk(V entity, VisitorContextImpl ctx, BiConsumer<Object, VisitorContext> task) {
         Datatype<V> datatype = ctx.vem().getSchema().getDatatype(entity);
         if (ctx.isVisited(entity))
             return;
 
         for (Parameter<V> parameter : datatype.getCollections().values()) {
-            Axis<Persistable> axis = (Axis<Persistable>) new Axis<>(entity, parameter);
+            Axis<?> axis = new Axis<>(entity, parameter);
             for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
                 ctx.register(leaf, axis);
                 walk(leaf, ctx, task);
@@ -80,7 +80,7 @@ public class Util {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
-            Axis<Persistable> axis = (Axis<Persistable>) new Axis<>(entity, parameter);
+            Axis<?> axis = new Axis<>(entity, parameter);
             Leaf<?> leaf = (Leaf<?>) parameter.get(entity);
             if (leaf != null) {
                 ctx.register(leaf, axis);
@@ -92,7 +92,7 @@ public class Util {
 
     public static class VisitorContextImpl implements VisitorContext {
         private final VersioningEntityManager vem;
-        private final Map<Persistable, Axis<Persistable>> register = new IdentityHashMap<>();
+        private final Map<Object, Axis<?>> register = new IdentityHashMap<>();
 
         public VisitorContextImpl(VersioningEntityManager vem) {
             this.vem = vem;
@@ -109,11 +109,11 @@ public class Util {
         }
 
         @Override
-        public boolean isVisited(Persistable entity) {
+        public boolean isVisited(Object entity) {
             return register.containsKey(entity);
         }
 
-        void register(Persistable entity, Axis<Persistable> axis) {
+        void register(Object entity, Axis<?> axis) {
             register.put(entity, axis);
         }
     }
