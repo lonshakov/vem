@@ -1,6 +1,8 @@
 package io.persistence.vem.engine.impl.function;
 
-import io.persistence.vem.domain.model.*;
+import io.persistence.vem.domain.model.Leaf;
+import io.persistence.vem.domain.model.Root;
+import io.persistence.vem.domain.model.Versionable;
 import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.engine.impl.crs.CRSpecificationUnitDTO;
 import io.persistence.vem.spi.function.Axis;

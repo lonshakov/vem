@@ -7,17 +7,19 @@ import io.persistence.vem.domain.request.ChangeState;
 import io.persistence.vem.domain.request.ChangeUnit;
 import io.persistence.vem.engine.impl.crs.CRSpecificationBuilderCascade;
 import io.persistence.vem.engine.impl.crs.CRSpecificationBuilderMerge;
+import io.persistence.vem.engine.impl.function.GraphBinderImpl;
+import io.persistence.vem.engine.impl.function.HistoryRecorderImpl;
 import io.persistence.vem.engine.impl.function.Util;
 import io.persistence.vem.engine.impl.request.ChangerImpl;
+import io.persistence.vem.spi.GraphBinder;
+import io.persistence.vem.spi.HistoryRecorder;
 import io.persistence.vem.spi.VersioningException;
+import io.persistence.vem.spi.context.SessionContext;
 import io.persistence.vem.spi.function.VisitorContext;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.request.Changer;
-import io.persistence.vem.spi.schema.Datatype;
-import io.persistence.vem.spi.schema.Parameter;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 import io.persistence.vem.spi.session.VersioningEntityManagerFactory;
-import io.persistence.vem.spi.context.SessionContext;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -33,17 +35,21 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     private final EntityManager em;
     private final Changer changer;
     private final SessionContext context;
+    private final HistoryRecorder historyRecorder;
+    private final GraphBinder graphBinder;
 
     public HibernateVersioningSession(VersioningEntityManagerFactory factory, EntityManager em, SessionContext context) {
         this.factory = factory;
         this.em = em;
         this.context = context;
         changer = new ChangerImpl(this);
+        historyRecorder = new HistoryRecorderImpl(this);
+        graphBinder = new GraphBinderImpl(this);
     }
 
     @Override
     public <T extends Root> ChangeRequest<T> persist(T entity) {
-        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderCascade<T>(ChangeOperation.GRAPH_CREATE, this)
+        ChangeRequestSpecification<T> crs = new CRSpecificationBuilderCascade<T>(ChangeOperation.CASCADE_CREATE, this)
                 .build(null, entity);
 
         return persist(crs);
@@ -61,7 +67,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         ChangeRequest<T> request = getChanger().createChangeRequest(entity);
         em.persist(request);
 
-        return persistCRS(specification, entity, request);
+        return persistCRS(specification, request);
     }
 
     @Override
@@ -90,7 +96,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             Class<ChangeRequest<T>> type = getChanger().getRequestDatatype(entity).getJavaType();
             request = findNonNull(type, specification.getUuid());
         }
-        return persistCRS(specification, entity, request);
+        return persistCRS(specification, request);
     }
 
     @Override
@@ -110,23 +116,16 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     @Override
     public <T extends Root> void affirm(ChangeRequest<T> request) {
         checkRequestBeforeUpdate(request, "affirm", ChangeState.PUBLISHED);
-        long versionDate = System.currentTimeMillis();
+        LocalDateTime versionDate = LocalDateTime.now();
 
         T root = request.getRoot();
         if (root.getVersion().getState().equals(VersionState.DRAFT)) {
             getSchema().getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, LocalDateTime.MIN));
             em.persist(request.getRoot());
         }
+        historyRecorder.record(request);
+        graphBinder.bind(request);
 
-        getChanger().stream(request, true).forEach(unit -> {
-            processHistoryIncrement(unit.getOperation(), unit.getLeaf(), versionDate);
-        });
-
-        getChanger().stream(request, true).forEach(unit -> {
-            processParentWiring(unit.getLeaf(), versionDate);
-        });
-
-        getChanger().getStoredChangeUnits(request).forEach(em::persist);
         getSchema().getDatatype(request).getPrimitive("state").set(request, ChangeState.AFFIRMED);
         em.persist(request);
     }
@@ -211,7 +210,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             throw new VersioningException("incorrect request state (" + request.getState() + ") for method " + methodName);
     }
 
-    private <T extends Root> ChangeRequest<T> persistCRS(ChangeRequestSpecification<T> specification, T entity, ChangeRequest<T> request) {
+    private <T extends Root> ChangeRequest<T> persistCRS(ChangeRequestSpecification<T> specification, ChangeRequest<T> request) {
         specification.getUnits().forEach(u -> {
             em.persist(u.getLeaf());
             ChangeUnit<ChangeRequest<T>> unit = getChanger().createChangeUnit(
@@ -224,76 +223,6 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         return request;
     }
 
-    private <T extends Leaf<P>, P extends Versionable> void processParentWiring(T leaf, long versionDate) {
-        Versionable parent = leaf.getVersion().getState().equals(VersionState.ACTIVE)
-                ? em.createQuery(getActiveParentQuery(leaf)).getSingleResult()
-                : null;
-        getSchema().getDatatype(leaf).getReference("parent").set(leaf, parent);
-    }
-
-    private <T extends Leaf<P>, P extends Versionable> void processHistoryIncrement(ChangeOperation operation, T leaf, long versionDate) {
-        Datatype<T> datatype = getSchema().getDatatype(leaf);
-
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        Class<T> type = (Class<T>) leaf.getClass();
-
-        CriteriaQuery<T> query = cb.createQuery(type);
-        javax.persistence.criteria.Root<T> root = query.from(type);
-
-        //set history state
-        switch (operation) {
-            case COLLECTION_REMOVE -> {
-                query.select(root).where(
-                        cb.equal(root.get(datatype.getGlobalIdentifier().getName()), getUuid(leaf)),
-                        cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
-                );
-                em.createQuery(query).getResultList().forEach(active -> {
-                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, LocalDateTime.MIN));
-                    datatype.getReference("parent").set(active, null);
-                    em.persist(active);
-                });
-            }
-            case COLLECTION_ADD, GRAPH_CREATE -> {
-                //NOOP
-            }
-            case REFERENCE_REPLACE, REFERENCE_NULLIFY -> {
-                query.select(root).where(
-                        cb.equal(root.get("parentUuid"), leaf.getParentUuid()),
-                        cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
-                );
-                em.createQuery(query).getResultList().forEach(active -> {
-                    datatype.getPrimitive("version").set(active, new Version(VersionState.HISTORY, LocalDateTime.MIN));
-                    datatype.getReference("parent").set(active, null);
-                    em.persist(active);
-                });
-            }
-        }
-        //set active/passive state
-        VersionState state = switch (operation) {
-            case COLLECTION_ADD, REFERENCE_REPLACE, GRAPH_CREATE -> VersionState.ACTIVE;
-            case COLLECTION_REMOVE, REFERENCE_NULLIFY -> VersionState.PASSIVE;
-        };
-        datatype.getPrimitive("version").set(leaf, new Version(state, LocalDateTime.MIN));
-    }
-
-    private <T extends Leaf<P>, P extends Versionable> CriteriaQuery<P> getActiveParentQuery(T entity) {
-        Datatype<T> datatype = getSchema().getDatatype(entity);
-        Parameter<T> parent = datatype.getReference("parent");
-
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        Class<P> type = (Class<P>) parent.getParameterDatatype().getJavaType();
-
-        CriteriaQuery<P> query = cb.createQuery(type);
-        javax.persistence.criteria.Root<P> root = query.from(type);
-
-        query.select(root).where(
-                cb.equal(root.get(datatype.getGlobalIdentifier().getName()), entity.getParentUuid()),
-                cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
-        );
-
-        return query;
-    }
-
     private <T> T findNonNull(Class<T> type, Serializable uuid) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(uuid);
@@ -302,9 +231,5 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         if (entity == null)
             throw new VersioningException("no data found - " + type.getSimpleName() + "(" + uuid + ")");
         return entity;
-    }
-
-    private <T> Serializable getUuid(T entity) {
-        return getSchema().getUtil().getUuid(entity);
     }
 }

@@ -1,17 +1,14 @@
 package io.persistence.vem.engine.impl.session;
 
-import io.persistence.vem.engine.impl.function.Persister;
 import io.persistence.vem.engine.impl.schema.HibernateSchema;
-import io.persistence.vem.spi.function.PersistenceProcessor;
+import io.persistence.vem.spi.context.SessionContextService;
 import io.persistence.vem.spi.schema.HistoryMappings;
 import io.persistence.vem.spi.schema.Schema;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 import io.persistence.vem.spi.session.VersioningEntityManagerFactory;
-import io.persistence.vem.spi.context.SessionContextService;
 import org.hibernate.internal.SessionFactoryImpl;
 
 import javax.persistence.EntityManagerFactory;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class HibernateVersioningSessionFactory implements VersioningEntityManagerFactory {
     private final SessionFactoryImpl factory;

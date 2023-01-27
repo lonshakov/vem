@@ -13,12 +13,12 @@ import io.persistence.vem.spi.session.VersioningEntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vem.basemodel.request.ChangeRequestTemplate;
-import vem.request.StoreChangeRequest;
-import vem.request.StoreChangeUnit;
 import vem.entity.Item;
 import vem.entity.Parcel;
 import vem.entity.Store;
 import vem.entity.StoreBody;
+import vem.request.StoreChangeRequest;
+import vem.request.StoreChangeUnit;
 import vem.util.TestDatabase;
 
 import javax.persistence.EntityManager;
