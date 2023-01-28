@@ -32,7 +32,7 @@ public class VersionedEntity extends Particle implements Versionable {
 
     @Override
     public Lifetime getLifetime() {
-        return null;
+        return lifetime;
     }
 
     @Override

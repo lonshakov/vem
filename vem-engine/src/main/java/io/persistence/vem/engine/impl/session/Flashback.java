@@ -11,10 +11,7 @@ import io.persistence.vem.spi.session.VersioningEntityManager;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Tuple;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Selection;
+import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,13 +30,13 @@ public class Flashback {
         Datatype<T> datatype = schema.getDatatype(type);
 
 
-        T entity = selectByUuid(uuid, datatype.getGlobalIdentifier()).get(0);
+        T entity = selectByUuid(uuid, datatype.getGlobalIdentifier(), dateTime).get(0);
         fetchGraph(entity, dateTime);
 
         return entity;
     }
 
-    private <T> void fetchGraph(T entity, LocalDateTime date) {
+    private <T> void fetchGraph(T entity, LocalDateTime dateTime) {
         Datatype<T> datatype = schema.getDatatype(entity);
 
         Serializable nextUuid = datatype.getGlobalIdentifier().get(entity);
@@ -50,14 +47,14 @@ public class Flashback {
                     //Leaf
                     Datatype<Leaf<?>> refDatatype = (Datatype<Leaf<?>>) reference.getParameterDatatype();
 
-                    List<Leaf<?>> values = selectByUuid(nextUuid, refDatatype.getPrimitive("parentUuid"));
+                    List<Leaf<?>> values = selectByUuid(nextUuid, refDatatype.getPrimitive("parentUuid"), dateTime);
                     if (values.size() > 1) {
                         throw new VersioningException("to many rows with parentUuid = " + nextUuid);
                     }
                     values.forEach(leaf -> {
                         reference.set(entity, leaf);
                         refDatatype.getReference("parent").set(leaf, entity);
-                        fetchGraph(leaf, date);
+                        fetchGraph(leaf, dateTime);
                     });
                 } else {
                     //Root
@@ -74,12 +71,12 @@ public class Flashback {
                     //Leaf
                     Datatype<Leaf<?>> colDatatype = (Datatype<Leaf<?>>) collection.getParameterDatatype();
 
-                    List<Leaf<?>> values = selectByUuid(nextUuid, colDatatype.getPrimitive("parentUuid"));
+                    List<Leaf<?>> values = selectByUuid(nextUuid, colDatatype.getPrimitive("parentUuid"), dateTime);
 
                     values.forEach(leaf -> {
                         collection.get(entity).add(leaf);
                         colDatatype.getReference("parent").set(leaf, entity);
-                        fetchGraph(leaf, date);
+                        fetchGraph(leaf, dateTime);
                     });
                 } else {
                     //Root
@@ -92,7 +89,7 @@ public class Flashback {
         });
     }
 
-    private <T> List<T> selectByUuid(Serializable uuid, SingularParameter<T> uuidParameter) {
+    private <T> List<T> selectByUuid(Serializable uuid, SingularParameter<T> uuidParameter, LocalDateTime dateTime) {
         Datatype<T> datatype = uuidParameter.getStructureDatatype();
 
         List<Parameter<T>> parameters = datatype.getPrimitives().values().stream()
@@ -112,7 +109,8 @@ public class Flashback {
 
         criteriaQuery.multiselect(selections).where(
                 cb.equal(root.get(uuidParameter.getName()), uuid),
-                cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
+                cb.lessThan(root.get("lifetime").get("starting"), dateTime),
+                cb.greaterThan(root.get("lifetime").get("expiring"), dateTime)
         );
 
         List<Tuple> tuples = em.createQuery(criteriaQuery).getResultList();

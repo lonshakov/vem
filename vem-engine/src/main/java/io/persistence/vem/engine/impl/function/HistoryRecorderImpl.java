@@ -53,7 +53,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
             Datatype<T> datatype = schema.getDatatype(root);
 
             Version version = new Version(VersionState.ACTIVE, context.getUser().getLogin());
-            Lifetime lifetime = new Lifetime(dateTime, LocalDateTime.MAX);
+            Lifetime lifetime = new Lifetime(dateTime, dateTime.plusYears(10));
 
             datatype.getPrimitive("version").set(root, version);
             datatype.getPrimitive("lifetime").set(root, lifetime);
@@ -116,7 +116,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
             case COLLECTION_REMOVE, REFERENCE_NULLIFY, CASCADE_DELETE -> VersionState.PASSIVE;
         };
         Version version = new Version(state, context.getUser().getLogin());
-        Lifetime lifetime = new Lifetime(dateTime, LocalDateTime.MAX);
+        Lifetime lifetime = new Lifetime(dateTime, dateTime.plusYears(10));
 
         datatype.getPrimitive("version").set(leaf, version);
         datatype.getPrimitive("lifetime").set(leaf, lifetime);

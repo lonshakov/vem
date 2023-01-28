@@ -398,13 +398,4 @@ public class MainTest {
         );
         Assertions.assertNull(datatype.getPrimitive("name").getParameterDatatype());
     }
-
-    /*@Test
-    void lab() {
-        isolator.accept(vem -> {
-            EntityGraph<Store> graph = vem.em().createEntityGraph(Store.class);
-            graph.addAttributeNodes("name");
-            System.out.println();
-        });
-    }*/
 }
