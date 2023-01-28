@@ -29,30 +29,31 @@ public class HistoryRecorderImpl implements HistoryRecorder {
     }
 
     public <T extends Root> void record(ChangeRequest<T> request) {
-        Lifetime lifetime = new Lifetime(LocalDateTime.now(), LocalDateTime.MAX);
+        LocalDateTime dateTime = LocalDateTime.now();
 
-        markRootEntity(request, lifetime);
+        markRootEntity(request, dateTime);
 
         changer.stream(request, false).forEach(unit -> {
             markHistory(
                     unit.getOperation(),
                     unit.getLeaf(),
-                    lifetime
+                    dateTime
             );
             markActual(
                     unit.getOperation(),
                     unit.getLeaf(),
-                    lifetime
+                    dateTime
             );
         });
     }
 
-    private <T extends Root> void markRootEntity(ChangeRequest<T> request, Lifetime lifetime) {
+    private <T extends Root> void markRootEntity(ChangeRequest<T> request, LocalDateTime dateTime) {
         T root = request.getRoot();
         if (root.getVersion().getState().equals(VersionState.DRAFT)) {
             Datatype<T> datatype = schema.getDatatype(root);
 
             Version version = new Version(VersionState.ACTIVE, context.getUser().getLogin());
+            Lifetime lifetime = new Lifetime(dateTime, LocalDateTime.MAX);
 
             datatype.getPrimitive("version").set(root, version);
             datatype.getPrimitive("lifetime").set(root, lifetime);
@@ -61,7 +62,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
         }
     }
 
-    private <T extends Leaf<P>, P extends Versionable> void markHistory(ChangeOperation operation, T leaf, Lifetime lifetime) {
+    private <T extends Leaf<P>, P extends Versionable> void markHistory(ChangeOperation operation, T leaf, LocalDateTime dateTime) {
         Datatype<T> datatype = schema.getDatatype(leaf);
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -71,6 +72,8 @@ public class HistoryRecorderImpl implements HistoryRecorder {
         javax.persistence.criteria.Root<T> root = query.from(type);
 
         Version version = new Version(VersionState.HISTORY, context.getUser().getLogin());
+        Lifetime lifetime = new Lifetime(leaf.getLifetime().getStarting(), dateTime);
+
         //set history state
         switch (operation) {
             case COLLECTION_REMOVE -> {
@@ -105,7 +108,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
         }
     }
 
-    private <T extends Leaf<P>, P extends Versionable> void markActual(ChangeOperation operation, T leaf, Lifetime lifetime) {
+    private <T extends Leaf<P>, P extends Versionable> void markActual(ChangeOperation operation, T leaf, LocalDateTime dateTime) {
         Datatype<T> datatype = schema.getDatatype(leaf);
         //set active/passive state
         VersionState state = switch (operation) {
@@ -113,6 +116,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
             case COLLECTION_REMOVE, REFERENCE_NULLIFY, CASCADE_DELETE -> VersionState.PASSIVE;
         };
         Version version = new Version(state, context.getUser().getLogin());
+        Lifetime lifetime = new Lifetime(dateTime, LocalDateTime.MAX);
 
         datatype.getPrimitive("version").set(leaf, version);
         datatype.getPrimitive("lifetime").set(leaf, lifetime);

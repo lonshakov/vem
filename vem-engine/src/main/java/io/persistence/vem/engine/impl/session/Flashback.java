@@ -9,10 +9,8 @@ import io.persistence.vem.spi.schema.Schema;
 import io.persistence.vem.spi.schema.SingularParameter;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 
-import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.Tuple;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -36,12 +34,12 @@ public class Flashback {
 
 
         T entity = selectByUuid(uuid, datatype.getGlobalIdentifier()).get(0);
-        fetchGraph(entity);
+        fetchGraph(entity, dateTime);
 
         return entity;
     }
 
-    private <T> void fetchGraph(T entity) {
+    private <T> void fetchGraph(T entity, LocalDateTime date) {
         Datatype<T> datatype = schema.getDatatype(entity);
 
         Serializable nextUuid = datatype.getGlobalIdentifier().get(entity);
@@ -59,7 +57,7 @@ public class Flashback {
                     values.forEach(leaf -> {
                         reference.set(entity, leaf);
                         refDatatype.getReference("parent").set(leaf, entity);
-                        fetchGraph(leaf);
+                        fetchGraph(leaf, date);
                     });
                 } else {
                     //Root
@@ -81,7 +79,7 @@ public class Flashback {
                     values.forEach(leaf -> {
                         collection.get(entity).add(leaf);
                         colDatatype.getReference("parent").set(leaf, entity);
-                        fetchGraph(leaf);
+                        fetchGraph(leaf, date);
                     });
                 } else {
                     //Root
