@@ -29,29 +29,39 @@ public class HistoryRecorderImpl implements HistoryRecorder {
     }
 
     public <T extends Root> void record(ChangeRequest<T> request) {
-        LocalDateTime dateTime = LocalDateTime.now();
+        Lifetime lifetime = new Lifetime(LocalDateTime.now(), LocalDateTime.MAX);
 
-        T root = request.getRoot();
-        if (root.getVersion().getState().equals(VersionState.DRAFT)) {
-            schema.getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, context.getUser().getLogin()));
-            em.merge(request.getRoot());
-        }
+        markRootEntity(request, lifetime);
 
         changer.stream(request, false).forEach(unit -> {
             markHistory(
                     unit.getOperation(),
                     unit.getLeaf(),
-                    dateTime
+                    lifetime
             );
             markActual(
                     unit.getOperation(),
                     unit.getLeaf(),
-                    dateTime
+                    lifetime
             );
         });
     }
 
-    private <T extends Leaf<P>, P extends Versionable> void markHistory(ChangeOperation operation, T leaf, LocalDateTime versionDate) {
+    private <T extends Root> void markRootEntity(ChangeRequest<T> request, Lifetime lifetime) {
+        T root = request.getRoot();
+        if (root.getVersion().getState().equals(VersionState.DRAFT)) {
+            Datatype<T> datatype = schema.getDatatype(root);
+
+            Version version = new Version(VersionState.ACTIVE, context.getUser().getLogin());
+
+            datatype.getPrimitive("version").set(root, version);
+            datatype.getPrimitive("lifetime").set(root, lifetime);
+
+            em.merge(request.getRoot());
+        }
+    }
+
+    private <T extends Leaf<P>, P extends Versionable> void markHistory(ChangeOperation operation, T leaf, Lifetime lifetime) {
         Datatype<T> datatype = schema.getDatatype(leaf);
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -71,6 +81,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
                     datatype.getPrimitive("version").set(active, version);
+                    datatype.getPrimitive("lifetime").set(active, lifetime);
                     datatype.getReference("parent").set(active, null);
                     em.merge(active);
                 });
@@ -86,6 +97,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
                 );
                 em.createQuery(query).getResultList().forEach(active -> {
                     datatype.getPrimitive("version").set(active, version);
+                    datatype.getPrimitive("lifetime").set(active, lifetime);
                     datatype.getReference("parent").set(active, null);
                     em.merge(active);
                 });
@@ -93,14 +105,18 @@ public class HistoryRecorderImpl implements HistoryRecorder {
         }
     }
 
-    private <T extends Leaf<P>, P extends Versionable> void markActual(ChangeOperation operation, T leaf, LocalDateTime versionDate) {
+    private <T extends Leaf<P>, P extends Versionable> void markActual(ChangeOperation operation, T leaf, Lifetime lifetime) {
         Datatype<T> datatype = schema.getDatatype(leaf);
         //set active/passive state
         VersionState state = switch (operation) {
             case COLLECTION_ADD, REFERENCE_REPLACE, CASCADE_CREATE -> VersionState.ACTIVE;
             case COLLECTION_REMOVE, REFERENCE_NULLIFY, CASCADE_DELETE -> VersionState.PASSIVE;
         };
-        datatype.getPrimitive("version").set(leaf, new Version(state, context.getUser().getLogin()));
+        Version version = new Version(state, context.getUser().getLogin());
+
+        datatype.getPrimitive("version").set(leaf, version);
+        datatype.getPrimitive("lifetime").set(leaf, lifetime);
+
         em.merge(leaf);
     }
 }
