@@ -5,7 +5,6 @@ import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.domain.request.ChangeRequest;
 import io.persistence.vem.engine.impl.crs.CRSpecificationDTO;
 import io.persistence.vem.engine.impl.crs.CRSpecificationUnitDTO;
-import io.persistence.vem.engine.impl.session.Flashback;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.HistoryMappings;
@@ -203,11 +202,9 @@ public class MainTest {
             //should be 1 history + 1 passive + 1 active = 3
             Assertions.assertEquals(3, items.size());
         });
-        AtomicReference<Serializable> uuid = new AtomicReference<>();
         //merge (update body)
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
-            uuid.set(store.getUuid());
             store.setBody(new StoreBody("Phuket"));
 
             ChangeRequest<Store> request = vem.merge(store);
@@ -215,13 +212,6 @@ public class MainTest {
             vem.affirm(request);
 
             Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
-        });
-        isolator.accept(vem -> {
-            Flashback flashback = new Flashback(vem);
-            Store store = flashback.flashback(Store.class, uuid.get(), LocalDateTime.now());
-            System.out.println();
-
-
         });
         isolator.accept(vem -> {
             Store store = selectX5.apply(vem);
@@ -232,6 +222,22 @@ public class MainTest {
             vem.affirm(request);
 
             Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
+        });
+
+        //todo
+        //it's test for flashback queries
+        //should be moved to another test (now it's here because of lack of test data)
+        AtomicReference<Serializable> uuid = new AtomicReference<>();
+        isolator.accept(vem -> {
+            Store store = selectX5.apply(vem);
+            uuid.set(store.getUuid());
+        });
+        isolator.accept(vem -> {
+            Store store = vem.flashback(Store.class, uuid.get(), LocalDateTime.now());
+
+            Assertions.assertNotNull(store);
+            Assertions.assertTrue(store.getLifetime().getStarting().isBefore(LocalDateTime.now()));
+            Assertions.assertTrue(store.getLifetime().getExpiring().isAfter(LocalDateTime.now()));
         });
     }
 

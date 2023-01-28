@@ -5,6 +5,7 @@ import io.persistence.vem.domain.model.Version;
 import io.persistence.vem.domain.model.VersionState;
 import io.persistence.vem.spi.VersioningException;
 import io.persistence.vem.spi.context.SessionContext;
+import io.persistence.vem.spi.function.Flashback;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
 import io.persistence.vem.spi.schema.Schema;
@@ -19,17 +20,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Flashback {
+public class FlashbackImpl implements Flashback {
     private final EntityManager em;
     private final Schema schema;
     private final SessionContext context;
 
-    public Flashback(VersioningEntityManager vem) {
+    public FlashbackImpl(VersioningEntityManager vem) {
         this.em = vem.em();
         this.schema = vem.getSchema();
         this.context = vem.getSessionContext();
     }
 
+    @Override
     public <T> T flashback(Class<T> type, Serializable uuid, LocalDateTime dateTime) {
         Datatype<T> datatype = schema.getDatatype(type);
 

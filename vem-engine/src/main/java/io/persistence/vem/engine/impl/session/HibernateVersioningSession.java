@@ -13,6 +13,7 @@ import io.persistence.vem.engine.impl.function.Util;
 import io.persistence.vem.engine.impl.request.ChangerImpl;
 import io.persistence.vem.spi.VersioningException;
 import io.persistence.vem.spi.context.SessionContext;
+import io.persistence.vem.spi.function.Flashback;
 import io.persistence.vem.spi.function.GraphBinder;
 import io.persistence.vem.spi.function.HistoryRecorder;
 import io.persistence.vem.spi.function.VisitorContext;
@@ -37,6 +38,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     private final SessionContext context;
     private final HistoryRecorder historyRecorder;
     private final GraphBinder graphBinder;
+    private final Flashback flashback;
 
     public HibernateVersioningSession(VersioningEntityManagerFactory factory, EntityManager em, SessionContext context) {
         this.factory = factory;
@@ -45,6 +47,7 @@ public class HibernateVersioningSession implements VersioningEntityManager {
         changer = new ChangerImpl(this);
         historyRecorder = new HistoryRecorderImpl(this);
         graphBinder = new GraphBinderImpl(this);
+        flashback = new FlashbackImpl(this);
     }
 
     @Override
@@ -172,8 +175,8 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
-    public <T> T find(Class<T> type, Serializable uuid, LocalDateTime dateTime) {
-        return null;
+    public <T> T flashback(Class<T> type, Serializable uuid, LocalDateTime dateTime) {
+        return flashback.flashback(type, uuid, dateTime);
     }
 
     @Override

@@ -37,7 +37,7 @@ public interface VersioningEntityManager extends AutoCloseable {
 
     <T> T find(Class<T> type, Serializable uuid);
 
-    <T> T find(Class<T> type, Serializable uuid, LocalDateTime dateTime);
+    <T> T flashback(Class<T> type, Serializable uuid, LocalDateTime dateTime);
 
     <T> void cascade(T entity, BiConsumer<Object, VisitorContext> task);
 
