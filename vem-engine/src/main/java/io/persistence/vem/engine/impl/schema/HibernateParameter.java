@@ -1,14 +1,12 @@
 package io.persistence.vem.engine.impl.schema;
 
-import io.persistence.vem.spi.schema.Accessor;
-import io.persistence.vem.spi.schema.Datatype;
-import io.persistence.vem.spi.schema.Parameter;
+import io.persistence.vem.spi.schema.*;
 import org.hibernate.metamodel.model.domain.internal.AbstractPluralAttribute;
 import org.hibernate.type.Type;
 
 import javax.persistence.metamodel.Attribute;
 
-public class HibernateParameter<T> implements Parameter<T> {
+abstract public class HibernateParameter<T> implements Parameter<T> {
     private final Datatype<T> structure;
     private final Attribute<T, ?> attribute;
     private final Accessor accessor;
@@ -57,12 +55,19 @@ public class HibernateParameter<T> implements Parameter<T> {
     }
 
     @Override
-    public void set(T owner, Object value) {
-        accessor.set(owner, value);
+    public Accessor getAccessor() {
+        return accessor;
     }
 
-    @Override
-    public Object get(T owner) {
-        return accessor.get(owner);
+    public static class Singular<T> extends HibernateParameter<T> implements SingularParameter<T> {
+        public Singular(Datatype<T> structure, Attribute<T, ?> attribute, Accessor accessor, Type hibernateType) {
+            super(structure, attribute, accessor, hibernateType);
+        }
+    }
+
+    public static class Plural<T> extends HibernateParameter<T> implements PluralParameter<T> {
+        public Plural(Datatype<T> structure, Attribute<T, ?> attribute, Accessor accessor, Type hibernateType) {
+            super(structure, attribute, accessor, hibernateType);
+        }
     }
 }

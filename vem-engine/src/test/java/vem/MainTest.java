@@ -373,7 +373,7 @@ public class MainTest {
 
         datatype.getPrimitive("name").set(store, "MVideo");
         datatype.getIdentifier().set(store, 100L);
-        ((List<Parcel>) datatype.getCollection("parcels").get(store)).add(parcel);
+        datatype.getCollection("parcels").get(store).add(parcel);
 
         Assertions.assertEquals("MVideo", store.getName());
         Assertions.assertEquals(100L, store.getId());

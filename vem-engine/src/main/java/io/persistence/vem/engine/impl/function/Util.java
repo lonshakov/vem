@@ -9,7 +9,8 @@ import io.persistence.vem.spi.function.Axis;
 import io.persistence.vem.spi.function.VisitorContext;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.schema.Datatype;
-import io.persistence.vem.spi.schema.Parameter;
+import io.persistence.vem.spi.schema.PluralParameter;
+import io.persistence.vem.spi.schema.SingularParameter;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 
 import java.io.Serializable;
@@ -24,10 +25,10 @@ public class Util {
         Serializable parentUuid = vem.getSchema().getUtil().getUuid(entity);
 
         //collections
-        for (Parameter<V> parameter : datatype.getCollections().values()) {
+        for (PluralParameter<V> parameter : datatype.getCollections().values()) {
             Datatype<Leaf<?>> parameterDatatype = (Datatype<Leaf<?>>) parameter.getParameterDatatype();
 
-            for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
+            parameter.get(entity).stream().map(obj -> (Leaf<?>) obj).forEach(leaf -> {
                 specification.getUnits().add(new CRSpecificationUnitDTO(
                         operation,
                         leaf
@@ -39,15 +40,15 @@ public class Util {
                         specification,
                         operation
                 );
-            }
+            });
         }
 
         //references
-        for (Parameter<V> parameter : datatype.getReferences().values()) {
+        for (SingularParameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
-            Leaf<Versionable> leaf = (Leaf<Versionable>) parameter.get(entity);
+            Leaf<Versionable> leaf = parameter.get(entity);
             if (leaf == null) {
                 continue;
             }
@@ -71,19 +72,19 @@ public class Util {
         if (ctx.isVisited(entity))
             return;
 
-        for (Parameter<V> parameter : datatype.getCollections().values()) {
+        for (PluralParameter<V> parameter : datatype.getCollections().values()) {
             Axis<?> axis = new Axis<>(entity, parameter);
-            for (Leaf<?> leaf : (Iterable<Leaf<?>>) parameter.get(entity)) {
+            parameter.get(entity).stream().map(obj -> (Leaf<?>) obj).forEach(leaf -> {
                 ctx.register(leaf, axis);
                 walk(leaf, ctx, task);
-            }
+            });
         }
-        for (Parameter<V> parameter : datatype.getReferences().values()) {
+        for (SingularParameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
             Axis<?> axis = new Axis<>(entity, parameter);
-            Leaf<?> leaf = (Leaf<?>) parameter.get(entity);
+            Leaf<?> leaf = parameter.get(entity);
             if (leaf != null) {
                 ctx.register(leaf, axis);
                 walk(leaf, ctx, task);

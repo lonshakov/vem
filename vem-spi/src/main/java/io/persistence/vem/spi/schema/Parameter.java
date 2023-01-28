@@ -33,7 +33,9 @@ public interface Parameter<T> {
         return getParameterDatatype().isVersionable();
     }
 
-    void set(T owner, Object value);
+    Accessor getAccessor();
 
-    Object get(T owner);
+    default void set(T owner, Object value) {
+        getAccessor().set(owner, value);
+    }
 }

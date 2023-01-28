@@ -9,21 +9,21 @@ public interface Datatype<T> {
 
     T clone(T entity);
 
-    Parameter<T> getIdentifier();
+    SingularParameter<T> getIdentifier();
 
-    Parameter<T> getGlobalIdentifier();
+    SingularParameter<T> getGlobalIdentifier();
 
-    Parameter<T> getPrimitive(String name);
+    SingularParameter<T> getPrimitive(String name);
 
-    Parameter<T> getReference(String name);
+    SingularParameter<T> getReference(String name);
 
-    Parameter<T> getCollection(String name);
+    PluralParameter<T> getCollection(String name);
 
-    Map<String, Parameter<T>> getPrimitives();
+    Map<String, SingularParameter<T>> getPrimitives();
 
-    Map<String, Parameter<T>> getReferences();
+    Map<String, SingularParameter<T>> getReferences();
 
-    Map<String, Parameter<T>> getCollections();
+    Map<String, PluralParameter<T>> getCollections();
 
     default boolean isGlobal() {
         return getGlobalIdentifier() != null;

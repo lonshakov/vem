@@ -2,7 +2,6 @@ package io.persistence.vem.engine.impl.session;
 
 import io.persistence.vem.domain.model.Leaf;
 import io.persistence.vem.domain.model.VersionState;
-import io.persistence.vem.domain.model.Versionable;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
 import io.persistence.vem.spi.schema.Schema;
@@ -18,7 +17,6 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 

@@ -10,7 +10,8 @@ import io.persistence.vem.domain.request.ChangeRequest;
 import io.persistence.vem.domain.request.ChangeUnit;
 import io.persistence.vem.spi.function.PersistenceProcessor;
 import io.persistence.vem.spi.schema.Datatype;
-import io.persistence.vem.spi.schema.Parameter;
+import io.persistence.vem.spi.schema.PluralParameter;
+import io.persistence.vem.spi.schema.SingularParameter;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 
 import java.io.Serializable;
@@ -22,19 +23,19 @@ public class Persister implements PersistenceProcessor {
         Datatype<V> datatype = vem.getSchema().getDatatype(entity);
         Serializable parentUuid = vem.getSchema().getUtil().getUuid(entity);
 
-        for (Parameter<V> parameter : datatype.getCollections().values()) {
-            for (Leaf<Versionable> leaf : (Iterable<Leaf<Versionable>>) parameter.get(entity)) {
+        for (PluralParameter<V> parameter : datatype.getCollections().values()) {
+            parameter.get(entity).stream().map(obj -> (Leaf<?>) obj).forEach(leaf -> {
                 vem.getSchema().getDatatype(leaf).getPrimitive("parentUuid").set(leaf, parentUuid);
                 bind(request, leaf, vem);
                 process(leaf, request, vem);
-            }
+            });
         }
 
-        for (Parameter<V> parameter : datatype.getReferences().values()) {
+        for (SingularParameter<V> parameter : datatype.getReferences().values()) {
             if (parameter.getName().equals("parent")) {
                 continue;
             }
-            Leaf<Versionable> leaf = (Leaf<Versionable>) parameter.get(entity);
+            Leaf<Versionable> leaf = parameter.get(entity);
             if (leaf == null) {
                 continue;
             }
