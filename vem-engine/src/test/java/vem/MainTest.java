@@ -218,7 +218,7 @@ public class MainTest {
         });
         isolator.accept(vem -> {
             Flashback flashback = new Flashback(vem);
-            Store store = flashback.find(Store.class, uuid.get(), LocalDateTime.now());
+            Store store = flashback.flashback(Store.class, uuid.get(), LocalDateTime.now());
             System.out.println();
 
 
