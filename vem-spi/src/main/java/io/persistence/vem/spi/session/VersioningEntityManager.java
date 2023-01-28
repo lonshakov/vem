@@ -2,6 +2,7 @@ package io.persistence.vem.spi.session;
 
 import io.persistence.vem.domain.model.Root;
 import io.persistence.vem.domain.request.ChangeRequest;
+import io.persistence.vem.spi.context.SessionContext;
 import io.persistence.vem.spi.function.VisitorContext;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.request.Changer;
@@ -45,6 +46,8 @@ public interface VersioningEntityManager extends AutoCloseable {
     default Schema getSchema() {
         return getFactory().getSchema();
     }
+
+    SessionContext getSessionContext();
 
     default HistoryMappings getHistoryMappings() {
         return getFactory().getHistoryMapping();

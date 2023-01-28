@@ -30,7 +30,7 @@ public interface Parameter<T> {
     }
 
     default boolean isVersionable() {
-        return getParameterDatatype().isVersionable();
+        return getAttribute().isAssociation() && getParameterDatatype().isVersionable();
     }
 
     Accessor getAccessor();

@@ -72,7 +72,7 @@ public class CRSpecificationBuilderMerge<T extends Root> implements ChangeReques
         }
         if (newLeaf == null) {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaf.get());
-            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, LocalDateTime.MIN));
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, vem.getSessionContext().getUser().getLogin()));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
             specification.getUnits().add(new CRSpecificationUnitDTO(
@@ -81,7 +81,7 @@ public class CRSpecificationBuilderMerge<T extends Root> implements ChangeReques
             ));
         } else {
             Leaf<?> leaf = newLeaf;
-            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.DRAFT, LocalDateTime.MIN));
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.DRAFT, vem.getSessionContext().getUser().getLogin()));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
             specification.getUnits().add(new CRSpecificationUnitDTO(
@@ -112,7 +112,7 @@ public class CRSpecificationBuilderMerge<T extends Root> implements ChangeReques
         removeIndex.removeAll(newLeaves.keySet());
         removeIndex.forEach(uuid -> {
             Leaf<?> leaf = parameterDatatype.clone(oldLeaves.get(uuid));
-            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, LocalDateTime.MIN));
+            parameterDatatype.getPrimitive("version").set(leaf, new Version(VersionState.PURGE, vem.getSessionContext().getUser().getLogin()));
             parameterDatatype.getPrimitive("parentUuid").set(leaf, parentUuid);
             parameterDatatype.getReference("parent").set(leaf, null);
 

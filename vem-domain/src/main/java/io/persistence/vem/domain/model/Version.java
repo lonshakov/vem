@@ -4,11 +4,11 @@ import java.time.LocalDateTime;
 
 public class Version {
     private VersionState state;
-    private LocalDateTime date;
+    private String user;
 
-    public Version(VersionState state, LocalDateTime date) {
+    public Version(VersionState state, String user) {
         this.state = state;
-        this.date = date;
+        this.user = user;
     }
 
     public Version() {
@@ -18,7 +18,7 @@ public class Version {
         return state;
     }
 
-    public LocalDateTime getDate() {
-        return date;
+    public String getUser() {
+        return user;
     }
 }

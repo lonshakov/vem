@@ -2,6 +2,7 @@ package io.persistence.vem.engine.impl.session;
 
 import io.persistence.vem.domain.model.Leaf;
 import io.persistence.vem.domain.model.VersionState;
+import io.persistence.vem.spi.VersioningException;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
 import io.persistence.vem.spi.schema.Schema;
@@ -33,38 +34,67 @@ public class Flashback {
     public <T> T find(Class<T> type, Serializable uuid, LocalDateTime dateTime) {
         Datatype<T> datatype = schema.getDatatype(type);
 
-        T entity = find1byUuid(uuid, datatype.getGlobalIdentifier());
+
+        T entity = selectByUuid(uuid, datatype.getGlobalIdentifier()).get(0);
+        fetchGraph(entity);
 
         return entity;
     }
 
-    private <T> T find0(Serializable uuid, Datatype<T> datatype) {
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<T> criteriaQuery = cb.createQuery(datatype.getJavaType());
-        Root<T> root = criteriaQuery.from(datatype.getJavaType());
-        criteriaQuery.select(root).where(cb.equal(
-                root.get(datatype.getGlobalIdentifier().getName()),
-                uuid
-        ));
+    private <T> void fetchGraph(T entity) {
+        Datatype<T> datatype = schema.getDatatype(entity);
 
-        TypedQuery<T> typedQuery = em.createQuery(criteriaQuery);
+        Serializable nextUuid = datatype.getGlobalIdentifier().get(entity);
 
-        EntityGraph<T> entityGraph = graph(datatype);
-        typedQuery.setHint("javax.persistence.fetchgraph", entityGraph);
+        datatype.getReferences().values().stream().filter(r -> !r.getName().equals("parent")).forEach(reference -> {
+            if (reference.isVersionable()) {
+                if (Leaf.class.isAssignableFrom(reference.getGraphType())) {
+                    //Leaf
+                    Datatype<Leaf<?>> refDatatype = (Datatype<Leaf<?>>) reference.getParameterDatatype();
 
-        return typedQuery.getSingleResult();
+                    List<Leaf<?>> values = selectByUuid(nextUuid, refDatatype.getPrimitive("parentUuid"));
+                    if (values.size() > 1) {
+                        throw new VersioningException("to many rows with parentUuid = " + nextUuid);
+                    }
+                    values.forEach(leaf -> {
+                        reference.set(entity, leaf);
+                        refDatatype.getReference("parent").set(leaf, entity);
+                        fetchGraph(leaf);
+                    });
+                } else {
+                    //Root
+                    //todo
+                }
+            } else {
+                //nonVersionable
+                //todo
+            }
+        });
+        datatype.getCollections().values().forEach(collection -> {
+            if (collection.isVersionable()) {
+                if (Leaf.class.isAssignableFrom(collection.getGraphType())) {
+                    //Leaf
+                    Datatype<Leaf<?>> colDatatype = (Datatype<Leaf<?>>) collection.getParameterDatatype();
+
+                    List<Leaf<?>> values = selectByUuid(nextUuid, colDatatype.getPrimitive("parentUuid"));
+
+                    values.forEach(leaf -> {
+                        collection.get(entity).add(leaf);
+                        colDatatype.getReference("parent").set(leaf, entity);
+                        fetchGraph(leaf);
+                    });
+                } else {
+                    //Root
+                    //todo
+                }
+            } else {
+                //nonVersionable
+                //todo
+            }
+        });
     }
 
-    private <T> EntityGraph<T> graph(Datatype<T> datatype) {
-        EntityGraph<T> graph = em.createEntityGraph(datatype.getJavaType());
-        datatype.getPrimitives().values().stream()
-                .filter(Parameter::isPrimitive)
-                .map(Parameter::getAttribute)
-                .forEach(graph::addAttributeNodes);
-        return graph;
-    }
-
-    private <T> T find1byUuid(Serializable uuid, SingularParameter<T> uuidParameter) {
+    private <T> List<T> selectByUuid(Serializable uuid, SingularParameter<T> uuidParameter) {
         Datatype<T> datatype = uuidParameter.getStructureDatatype();
 
         List<Parameter<T>> parameters = datatype.getPrimitives().values().stream()
@@ -87,35 +117,15 @@ public class Flashback {
                 cb.equal(root.get("version").get("state"), VersionState.ACTIVE)
         );
 
-        Tuple tuple = em.createQuery(criteriaQuery).getSingleResult();
+        List<Tuple> tuples = em.createQuery(criteriaQuery).getResultList();
 
-        T entity = datatype.instantiate();
-
-        parameters.forEach(parameter -> parameter.set(entity, tuple.get(parameter.getName())));
-
-        Serializable nextUuid = (Serializable) datatype.getGlobalIdentifier().get(entity);
-
-        datatype.getReferences().values().forEach(reference -> {
-            if (reference.isVersionable()) {
-                if (Leaf.class.isAssignableFrom(reference.getJavaType())) {
-                    //Leaf
-                    Datatype<Leaf<?>> refDatatype = (Datatype<Leaf<?>>) reference.getParameterDatatype();
-                    Leaf<?> leaf = find1byUuid(
-                            nextUuid,
-                            refDatatype.getPrimitive("parentUuid")
-                    );
-                    reference.set(entity, leaf);
-                    refDatatype.getReference("parent").set(leaf, entity);
-                } else {
-                    //Root
-                    //todo
-                }
-            } else {
-                //nonVersionable
-                //todo
-            }
-        });
-
-        return entity;
+        return tuples.stream().map(tuple -> {
+            T entity = datatype.instantiate();
+            parameters.forEach(parameter -> parameter.set(
+                    entity,
+                    tuple.get(parameter.getName())
+            ));
+            return entity;
+        }).collect(Collectors.toList());
     }
 }

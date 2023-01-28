@@ -188,6 +188,11 @@ public class HibernateVersioningSession implements VersioningEntityManager {
     }
 
     @Override
+    public SessionContext getSessionContext() {
+        return context;
+    }
+
+    @Override
     public VersioningEntityManagerFactory getFactory() {
         return factory;
     }

@@ -3,6 +3,7 @@ package io.persistence.vem.engine.impl.function;
 import io.persistence.vem.domain.model.*;
 import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.domain.request.ChangeRequest;
+import io.persistence.vem.spi.context.SessionContext;
 import io.persistence.vem.spi.function.HistoryRecorder;
 import io.persistence.vem.spi.request.Changer;
 import io.persistence.vem.spi.schema.Datatype;
@@ -18,11 +19,13 @@ public class HistoryRecorderImpl implements HistoryRecorder {
     private final EntityManager em;
     private final Schema schema;
     private final Changer changer;
+    private final SessionContext context;
 
     public HistoryRecorderImpl(VersioningEntityManager vem) {
         this.em = vem.em();
         this.schema = vem.getSchema();
         this.changer = vem.getChanger();
+        this.context = vem.getSessionContext();
     }
 
     public <T extends Root> void record(ChangeRequest<T> request) {
@@ -30,7 +33,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
 
         T root = request.getRoot();
         if (root.getVersion().getState().equals(VersionState.DRAFT)) {
-            schema.getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, dateTime));
+            schema.getDatatype(root).getPrimitive("version").set(root, new Version(VersionState.ACTIVE, context.getUser().getLogin()));
             em.merge(request.getRoot());
         }
 
@@ -57,7 +60,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
         CriteriaQuery<T> query = cb.createQuery(type);
         javax.persistence.criteria.Root<T> root = query.from(type);
 
-        Version version = new Version(VersionState.HISTORY, versionDate);
+        Version version = new Version(VersionState.HISTORY, context.getUser().getLogin());
         //set history state
         switch (operation) {
             case COLLECTION_REMOVE -> {
@@ -97,7 +100,7 @@ public class HistoryRecorderImpl implements HistoryRecorder {
             case COLLECTION_ADD, REFERENCE_REPLACE, CASCADE_CREATE -> VersionState.ACTIVE;
             case COLLECTION_REMOVE, REFERENCE_NULLIFY, CASCADE_DELETE -> VersionState.PASSIVE;
         };
-        datatype.getPrimitive("version").set(leaf, new Version(state, versionDate));
+        datatype.getPrimitive("version").set(leaf, new Version(state, context.getUser().getLogin()));
         em.merge(leaf);
     }
 }
