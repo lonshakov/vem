@@ -12,7 +12,7 @@ abstract public class HibernateParameter<T> implements Parameter<T> {
     private final Accessor accessor;
     private final Type hibernateType;
 
-    public HibernateParameter(Datatype<T> structure, Attribute<T, ?> attribute, Accessor accessor, Type hibernateType) {
+    HibernateParameter(Datatype<T> structure, Attribute<T, ?> attribute, Accessor accessor, Type hibernateType) {
         this.structure = structure;
         this.attribute = attribute;
         this.accessor = accessor;

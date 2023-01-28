@@ -5,6 +5,7 @@ import io.persistence.vem.domain.model.VersionState;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
 import io.persistence.vem.spi.schema.Schema;
+import io.persistence.vem.spi.schema.SingularParameter;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 
 import javax.persistence.EntityGraph;
@@ -63,7 +64,7 @@ public class Flashback {
         return graph;
     }
 
-    private <T> T find1byUuid(Serializable uuid, Parameter<T> uuidParameter) {
+    private <T> T find1byUuid(Serializable uuid, SingularParameter<T> uuidParameter) {
         Datatype<T> datatype = uuidParameter.getStructureDatatype();
 
         List<Parameter<T>> parameters = datatype.getPrimitives().values().stream()
