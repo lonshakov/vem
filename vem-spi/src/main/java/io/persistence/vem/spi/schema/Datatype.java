@@ -1,5 +1,7 @@
 package io.persistence.vem.spi.schema;
 
+import io.persistence.vem.domain.model.Versionable;
+
 import java.util.Map;
 
 public interface Datatype<T> {
@@ -25,6 +27,10 @@ public interface Datatype<T> {
 
     default boolean isGlobal() {
         return getGlobalIdentifier() != null;
+    }
+
+    default boolean isVersionable() {
+        return Versionable.class.isAssignableFrom(getJavaType());
     }
 
     Class<T> getJavaType();

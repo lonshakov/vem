@@ -10,6 +10,7 @@ import io.persistence.vem.spi.schema.Schema;
 
 import javax.persistence.EntityManager;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.function.BiConsumer;
 
 public interface VersioningEntityManager extends AutoCloseable {
@@ -34,6 +35,8 @@ public interface VersioningEntityManager extends AutoCloseable {
     <T extends Root> void destroy(ChangeRequestSpecification<T> specification);
 
     <T> T find(Class<T> type, Serializable uuid);
+
+    <T> T find(Class<T> type, Serializable uuid, LocalDateTime dateTime);
 
     <T> void cascade(T entity, BiConsumer<Object, VisitorContext> task);
 

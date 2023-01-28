@@ -44,7 +44,7 @@ public class HibernateDatatype<T> implements Datatype<T> {
             }
             Parameter<T> parameter = new HibernateParameter<>(
                     this,
-                    attribute,
+                    (Attribute<T, ?>) attribute,
                     new Accessors.Primitive(entityPersister, name),
                     entityPersister.getPropertyType(name)
             );
@@ -67,7 +67,7 @@ public class HibernateDatatype<T> implements Datatype<T> {
 
         identifier = new HibernateParameter<>(
                 this,
-                entityDescriptor.getId(entityDescriptor.getIdType().getJavaType()),
+                (Attribute<T, ?>) entityDescriptor.getId(entityDescriptor.getIdType().getJavaType()),
                 new Accessors.Id(entityPersister),
                 entityPersister.getIdentifierType()
         );

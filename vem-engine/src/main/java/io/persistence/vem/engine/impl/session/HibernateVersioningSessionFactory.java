@@ -7,6 +7,7 @@ import io.persistence.vem.spi.schema.Schema;
 import io.persistence.vem.spi.session.VersioningEntityManager;
 import io.persistence.vem.spi.session.VersioningEntityManagerFactory;
 import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.internal.SessionImpl;
 
 import javax.persistence.EntityManagerFactory;
 

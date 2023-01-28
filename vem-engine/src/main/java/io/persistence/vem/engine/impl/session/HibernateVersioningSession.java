@@ -25,6 +25,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -168,6 +169,11 @@ public class HibernateVersioningSession implements VersioningEntityManager {
             case 1 -> result.get(0);
             default -> throw new VersioningException("too many rows - " + type.getName() + "(" + uuid + ")");
         };
+    }
+
+    @Override
+    public <T> T find(Class<T> type, Serializable uuid, LocalDateTime dateTime) {
+        return null;
     }
 
     @Override

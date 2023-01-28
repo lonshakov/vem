@@ -10,20 +10,15 @@ import javax.persistence.metamodel.Attribute;
 
 public class HibernateParameter<T> implements Parameter<T> {
     private final Datatype<T> structure;
-    private final Attribute<? super T, ?> attribute;
+    private final Attribute<T, ?> attribute;
     private final Accessor accessor;
     private final Type hibernateType;
 
-    public HibernateParameter(Datatype<T> structure, Attribute<? super T, ?> attribute, Accessor accessor, Type hibernateType) {
+    public HibernateParameter(Datatype<T> structure, Attribute<T, ?> attribute, Accessor accessor, Type hibernateType) {
         this.structure = structure;
         this.attribute = attribute;
         this.accessor = accessor;
         this.hibernateType = hibernateType;
-    }
-
-    @Override
-    public String getName() {
-        return attribute.getName();
     }
 
     @Override
@@ -33,6 +28,7 @@ public class HibernateParameter<T> implements Parameter<T> {
         return hibernateType.getReturnedClass();
     }
 
+    /*only for entity types*/
     @Override
     public Class<?> getGraphType() {
         if (!attribute.isAssociation())
@@ -40,6 +36,11 @@ public class HibernateParameter<T> implements Parameter<T> {
         return attribute.isCollection()
                 ? ((AbstractPluralAttribute) attribute).getValueGraphType().getJavaType()
                 : getJavaType();
+    }
+
+    @Override
+    public Attribute<T, ?> getAttribute() {
+        return attribute;
     }
 
     @Override
@@ -56,16 +57,6 @@ public class HibernateParameter<T> implements Parameter<T> {
     }
 
     @Override
-    public boolean isCollection() {
-        return attribute.isAssociation() && attribute.isCollection();
-    }
-
-    @Override
-    public boolean isReference() {
-        return attribute.isAssociation() && !attribute.isCollection();
-    }
-
-    @Override
     public void set(T owner, Object value) {
         accessor.set(owner, value);
     }
@@ -73,23 +64,5 @@ public class HibernateParameter<T> implements Parameter<T> {
     @Override
     public Object get(T owner) {
         return accessor.get(owner);
-    }
-
-    @Override
-    public String toString() {
-        return attribute.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        HibernateParameter<?> that = (HibernateParameter<?>) o;
-        return attribute.equals(that.attribute);
-    }
-
-    @Override
-    public int hashCode() {
-        return attribute.hashCode();
     }
 }

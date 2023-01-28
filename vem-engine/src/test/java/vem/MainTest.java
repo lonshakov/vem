@@ -5,6 +5,7 @@ import io.persistence.vem.domain.request.ChangeOperation;
 import io.persistence.vem.domain.request.ChangeRequest;
 import io.persistence.vem.engine.impl.crs.CRSpecificationDTO;
 import io.persistence.vem.engine.impl.crs.CRSpecificationUnitDTO;
+import io.persistence.vem.engine.impl.session.Flashback;
 import io.persistence.vem.spi.request.ChangeRequestSpecification;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.HistoryMappings;
@@ -22,8 +23,11 @@ import vem.request.StoreChangeUnit;
 import vem.util.TestDatabase;
 
 import javax.persistence.EntityManager;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -199,9 +203,11 @@ public class MainTest {
             //should be 1 history + 1 passive + 1 active = 3
             Assertions.assertEquals(3, items.size());
         });
+        AtomicReference<Serializable> uuid = new AtomicReference<>();
         //merge (update body)
         isolator.accept((vem) -> {
             Store store = selectX5.apply(vem);
+            uuid.set(store.getUuid());
             store.setBody(new StoreBody("Phuket"));
 
             ChangeRequest<Store> request = vem.merge(store);
@@ -209,6 +215,13 @@ public class MainTest {
             vem.affirm(request);
 
             Assertions.assertEquals(1, vem.getChanger().stream(request, true).count());
+        });
+        isolator.accept(vem -> {
+            Flashback flashback = new Flashback(vem);
+            Store store = flashback.find(Store.class, uuid.get(), LocalDateTime.now());
+            System.out.println();
+
+
         });
         isolator.accept(vem -> {
             Store store = selectX5.apply(vem);
@@ -385,4 +398,13 @@ public class MainTest {
         );
         Assertions.assertNull(datatype.getPrimitive("name").getParameterDatatype());
     }
+
+    /*@Test
+    void lab() {
+        isolator.accept(vem -> {
+            EntityGraph<Store> graph = vem.em().createEntityGraph(Store.class);
+            graph.addAttributeNodes("name");
+            System.out.println();
+        });
+    }*/
 }

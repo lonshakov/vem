@@ -1,22 +1,36 @@
 package io.persistence.vem.spi.schema;
 
+import javax.persistence.metamodel.Attribute;
+
 public interface Parameter<T> {
-    String getName();
+    default String getName() {
+        return getAttribute().getName();
+    }
 
     Class<?> getJavaType();
 
     Class<?> getGraphType();
 
+    Attribute<T, ?> getAttribute();
+
     Datatype<?> getParameterDatatype();
 
     Datatype<T> getStructureDatatype();
 
-    boolean isCollection();
+    default boolean isCollection() {
+        return !isPrimitive() && getAttribute().isCollection();
+    }
 
-    boolean isReference();
+    default boolean isReference() {
+        return !isPrimitive() && !getAttribute().isCollection();
+    }
 
     default boolean isPrimitive() {
-        return !isReference() && !isCollection();
+        return !getAttribute().isAssociation();
+    }
+
+    default boolean isVersionable() {
+        return getParameterDatatype().isVersionable();
     }
 
     void set(T owner, Object value);
