@@ -1,7 +1,6 @@
 package io.persistence.vem.engine.impl.session;
 
 import io.persistence.vem.domain.model.Leaf;
-import io.persistence.vem.domain.model.VersionState;
 import io.persistence.vem.spi.VersioningException;
 import io.persistence.vem.spi.schema.Datatype;
 import io.persistence.vem.spi.schema.Parameter;
@@ -11,7 +10,10 @@ import io.persistence.vem.spi.session.VersioningEntityManager;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Tuple;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Selection;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;

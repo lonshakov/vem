@@ -8,7 +8,6 @@ import vem.basemodel.basic.Particle;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 @MappedSuperclass
 public class VersionedEntity extends Particle implements Versionable {

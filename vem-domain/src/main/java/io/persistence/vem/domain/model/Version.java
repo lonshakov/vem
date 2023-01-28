@@ -1,7 +1,5 @@
 package io.persistence.vem.domain.model;
 
-import java.time.LocalDateTime;
-
 public class Version {
     private VersionState state;
     private String user;
